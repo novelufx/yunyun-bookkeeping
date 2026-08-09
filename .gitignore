@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.workbuddy/
+miniapp/
+test/*.run.mjs
+*.local
+.DS_Store

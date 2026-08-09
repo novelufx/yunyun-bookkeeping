@@ -1,0 +1,144 @@
+@import "tailwindcss";
+
+@theme {
+  --color-pink-50: #FFF0F5;
+  --color-pink-100: #FFE4EC;
+  --color-pink-200: #FFC8D6;
+  --color-pink-300: #FFA0B8;
+  --color-pink-400: #FF7AA3;
+  --color-pink-500: #FF5C8D;
+  --color-pink-600: #E84578;
+  --color-pink-700: #C73665;
+  --color-pink-800: #A02D52;
+  --color-pink-900: #7A2540;
+
+  --color-rose-50: #FFF1F2;
+  --color-rose-100: #FFE4E6;
+  --color-rose-200: #FECDD3;
+  --color-rose-300: #FDA4AF;
+  --color-rose-400: #FB7185;
+  --color-rose-500: #F43F5E;
+  --color-rose-600: #E11D48;
+
+  --font-sans: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "WenQuanYi Micro Hei", system-ui, -apple-system, sans-serif;
+}
+
+html, body, #root {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-image: url('/bg.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  max-width: 480px;
+  margin: 0 auto;
+  position: relative;
+}
+
+/* Hide scrollbar but keep functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Custom number keypad */
+.keypad-btn {
+  @apply flex items-center justify-center h-14 text-xl font-semibold rounded-2xl bg-white/90 backdrop-blur-sm border border-pink-300/70 text-gray-700 shadow-sm shadow-pink-200/40 active:scale-95 active:bg-pink-50 transition-all duration-150 select-none;
+}
+.keypad-btn.primary {
+  @apply bg-pink-400 text-white border-pink-400 shadow-md shadow-pink-300/50 active:bg-pink-500;
+}
+
+/* Glass card */
+.glass {
+  @apply bg-white/80 backdrop-blur-md rounded-3xl border border-pink-200/60 shadow-lg shadow-pink-100/40;
+}
+.glass-strong {
+  @apply bg-white/90 backdrop-blur-xl rounded-3xl border border-pink-200/70 shadow-xl shadow-pink-200/40;
+}
+
+/* Tab bar glass */
+.tab-glass {
+  @apply bg-white/90 backdrop-blur-xl border-t border-pink-200/70;
+}
+
+/* Floating action button */
+.fab {
+  @apply w-14 h-14 rounded-full bg-pink-400 text-white flex items-center justify-center shadow-lg shadow-pink-300/50 active:scale-90 transition-transform duration-200;
+}
+
+/* Category chip */
+.cat-chip {
+  @apply flex flex-col items-center justify-center gap-1 p-3 rounded-2xl bg-white/85 backdrop-blur-sm border border-pink-200/70 shadow-sm shadow-pink-100/40 active:scale-95 active:bg-pink-50 transition-all duration-150;
+}
+.cat-chip .emoji {
+  @apply text-2xl;
+}
+.cat-chip .label {
+  @apply text-xs text-gray-600 font-medium;
+}
+
+/* Transaction item */
+.tx-item {
+  @apply flex items-center justify-between p-3 rounded-2xl bg-white/80 backdrop-blur-sm border border-pink-200/60 shadow-sm shadow-pink-100/30 active:bg-pink-50/50 transition-colors;
+}
+
+/* Stat card */
+.stat-card {
+  @apply flex-1 p-4 rounded-2xl bg-white/85 backdrop-blur-sm border border-pink-200/70 shadow-sm shadow-pink-100/40 text-center;
+}
+
+/* Input field glass */
+.input-glass {
+  @apply w-full px-4 py-3 rounded-2xl bg-white/85 backdrop-blur-sm border border-pink-300/70 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-pink-400 transition-all;
+}
+
+/* Pink button */
+.btn-pink {
+  @apply w-full py-3.5 rounded-2xl bg-pink-400 text-white font-semibold text-base shadow-md shadow-pink-200/50 active:scale-[0.98] active:bg-pink-500 transition-all;
+}
+.btn-pink-outline {
+  @apply w-full py-3.5 rounded-2xl bg-white/70 backdrop-blur-sm border border-pink-200 text-pink-500 font-semibold text-base active:bg-pink-50 transition-all;
+}
+
+/* Type selector tab */
+.type-tab {
+  @apply flex-1 py-2.5 text-sm font-medium rounded-xl border border-pink-200/60 bg-white/70 backdrop-blur-sm transition-all;
+}
+.type-tab.active {
+  @apply bg-pink-400 text-white border-pink-400 shadow-md shadow-pink-200/40;
+}
+.type-tab:not(.active) {
+  @apply text-gray-600 hover:text-pink-400 hover:bg-pink-50;
+}
+
+/* Animations */
+@keyframes slideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-slide-up {
+  animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.animate-fade-in {
+  animation: fadeIn 0.25s ease forwards;
+}
