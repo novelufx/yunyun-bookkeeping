@@ -2,6 +2,7 @@ node_modules/
 dist/
 .workbuddy/
 miniapp/
-test/*.run.mjs
+test/*.mjs
+build.log
 *.local
 .DS_Store
