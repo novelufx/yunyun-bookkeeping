@@ -1,30 +1,34 @@
 import { useState, useRef, type ChangeEvent } from 'react';
-import { Plus, Trash2, Edit3, RotateCcw, AlertTriangle, Download, Upload, PiggyBank } from 'lucide-react';
+import { Plus, Trash2, Edit3, RotateCcw, AlertTriangle, Download, Upload, PiggyBank, Grid3x3 } from 'lucide-react';
 import { useStore, formatMoney, genId, exportState, mergeWithPresets, presetCategories, presetAccounts } from '../store.tsx';
 import type { Category, Account } from '../types';
+import CategoryIcon from './CategoryIcon';
+import CategoryAddModal from './CategoryAddModal';
 
 interface Props {
   onOpenBudget: () => void;
   onOpenImport: () => void;
+  onOpenShortcuts: () => void;
 }
 
-export default function SettingsPage({ onOpenBudget, onOpenImport }: Props) {
+export default function SettingsPage({ onOpenBudget, onOpenImport, onOpenShortcuts }: Props) {
   const { state, dispatch } = useStore();
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [showCatModal, setShowCatModal] = useState(false);
+  const [editingCat, setEditingCat] = useState<Category | undefined>();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isPresetCategory = (id: string) => presetCategories.some(c => c.id === id);
   const isPresetAccount = (id: string) => presetAccounts.some(a => a.id === id);
 
   const handleAddCategory = () => {
-    const name = prompt('输入分类名称');
-    if (!name?.trim()) return;
-    const type = confirm('是收入分类吗？\n（确定=收入，取消=支出）') ? 'income' : 'expense';
-    const icon = type === 'income' ? '✨' : '📝';
-    dispatch({
-      type: 'ADD_CATEGORY',
-      payload: { id: genId(), name: name.trim(), type, icon, sort: 100 } as Category,
-    });
+    setEditingCat(undefined);
+    setShowCatModal(true);
+  };
+
+  const handleEditCategory = (cat: Category) => {
+    setEditingCat(cat);
+    setShowCatModal(true);
   };
 
   const handleAddAccount = () => {
@@ -104,20 +108,25 @@ export default function SettingsPage({ onOpenBudget, onOpenImport }: Props) {
           {state.categories.map(cat => (
             <div key={cat.id} className="flex items-center justify-between p-2 rounded-xl bg-white/80 border border-pink-200/60">
               <div className="flex items-center gap-2">
-                <span className="text-base">{cat.icon}</span>
+                <CategoryIcon category={cat} className="text-base" />
                 <span className="text-sm text-gray-700">{cat.name}</span>
                 <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${cat.type === 'income' ? 'bg-pink-100 text-pink-500' : 'bg-rose-100 text-rose-500'}`}>
                   {cat.type === 'income' ? '收' : '支'}
                 </span>
               </div>
-              {!isPresetCategory(cat.id) && (
-                <button
-                  onClick={() => dispatch({ type: 'DELETE_CATEGORY', payload: cat.id })}
-                  className="p-1.5 rounded-lg active:bg-rose-50 transition-colors"
-                >
-                  <Trash2 size={14} className="text-gray-300" />
+              <div className="flex items-center gap-1">
+                <button onClick={() => handleEditCategory(cat)} className="p-1.5 rounded-lg active:bg-pink-50 transition-colors">
+                  <Edit3 size={14} className="text-gray-300" />
                 </button>
-              )}
+                {!isPresetCategory(cat.id) && (
+                  <button
+                    onClick={() => dispatch({ type: 'DELETE_CATEGORY', payload: cat.id })}
+                    className="p-1.5 rounded-lg active:bg-rose-50 transition-colors"
+                  >
+                    <Trash2 size={14} className="text-gray-300" />
+                  </button>
+                )}
+              </div>
             </div>
           ))}
         </div>
@@ -168,6 +177,11 @@ export default function SettingsPage({ onOpenBudget, onOpenImport }: Props) {
             <span className="flex-1 text-sm text-gray-700">预算管理</span>
             <span className="text-[10px] text-pink-400">设置 ›</span>
           </button>
+          <button onClick={onOpenShortcuts} className="w-full flex items-center gap-3 p-2.5 rounded-xl bg-white/80 border border-pink-200/60 active:bg-pink-50 transition-colors text-left">
+            <span className="w-8 h-8 rounded-lg bg-pink-100 flex items-center justify-center text-base"><Grid3x3 size={16} className="text-pink-500" /></span>
+            <span className="flex-1 text-sm text-gray-700">快捷记账管理</span>
+            <span className="text-[10px] text-pink-400">自定义 ›</span>
+          </button>
           <button onClick={onOpenImport} className="w-full flex items-center gap-3 p-2.5 rounded-xl bg-white/80 border border-pink-200/60 active:bg-pink-50 transition-colors text-left">
             <span className="w-8 h-8 rounded-lg bg-pink-100 flex items-center justify-center text-base">📥</span>
             <span className="flex-1 text-sm text-gray-700">导入历史账本</span>
@@ -191,6 +205,9 @@ export default function SettingsPage({ onOpenBudget, onOpenImport }: Props) {
             onChange={handleImportBackup}
           />
         </div>
+        <p className="text-[10px] text-gray-400 px-2 mt-1.5 leading-relaxed">
+          ℹ️ 奶茶日历的图片仅保存在本机，不参与备份导出。换手机或清除浏览器数据会丢失奶茶图片。
+        </p>
       </div>
 
       {/* About */}
@@ -238,6 +255,14 @@ export default function SettingsPage({ onOpenBudget, onOpenImport }: Props) {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Category add/edit modal */}
+      {showCatModal && (
+        <CategoryAddModal
+          editingCat={editingCat}
+          onClose={() => { setShowCatModal(false); setEditingCat(undefined); }}
+        />
       )}
     </div>
   );

@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { ChevronLeft, Wallet } from 'lucide-react';
 import { useStore, getBudgetStatus, getCategoryStats, formatMoney } from '../store.tsx';
+import CategoryIcon from './CategoryIcon';
 
 interface Props {
   onBack: () => void;
@@ -111,7 +112,7 @@ export default function BudgetPage({ onBack }: Props) {
                 <div key={cat.id} className="p-2.5 rounded-2xl bg-white/85 border border-pink-200/60">
                   <div className="flex items-center justify-between mb-1.5">
                     <div className="flex items-center gap-2">
-                      <span className="text-base">{cat.icon}</span>
+                      <CategoryIcon category={cat} className="text-base" />
                       <span className="text-sm text-gray-700">{cat.name}</span>
                     </div>
                     <span className="text-[10px] text-gray-400">

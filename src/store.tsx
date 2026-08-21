@@ -1,5 +1,5 @@
 import { createContext, useContext, useReducer, useEffect, type ReactNode } from 'react';
-import type { Transaction, Category, Account, TxType, Budget } from './types';
+import type { Transaction, Category, Account, TxType, Budget, MilkTeaEntry } from './types';
 
 const STORAGE_KEY = 'yunyun-bookkeeping-v1';
 
@@ -31,6 +31,8 @@ interface State {
   categories: Category[];
   accounts: Account[];
   budget: Budget;
+  shortcutCategories: string[];
+  milkTeas: MilkTeaEntry[];
 }
 
 type Action =
@@ -40,11 +42,16 @@ type Action =
   | { type: 'DELETE_TX'; payload: string }
   | { type: 'IMPORT_TX'; payload: Transaction[] }
   | { type: 'ADD_CATEGORY'; payload: Category }
+  | { type: 'UPDATE_CATEGORY'; payload: Category }
   | { type: 'DELETE_CATEGORY'; payload: string }
   | { type: 'ADD_ACCOUNT'; payload: Account }
   | { type: 'UPDATE_ACCOUNT'; payload: Account }
   | { type: 'DELETE_ACCOUNT'; payload: string }
   | { type: 'SET_BUDGET'; payload: Budget }
+  | { type: 'SET_SHORTCUTS'; payload: string[] }
+  | { type: 'ADD_MILKTEA'; payload: MilkTeaEntry }
+  | { type: 'EDIT_MILKTEA'; payload: MilkTeaEntry }
+  | { type: 'DELETE_MILKTEA'; payload: string }
   | { type: 'RESET' };
 
 function reducer(state: State, action: Action): State {
@@ -68,11 +75,14 @@ function reducer(state: State, action: Action): State {
     }
     case 'ADD_CATEGORY':
       return { ...state, categories: [...state.categories, action.payload] };
+    case 'UPDATE_CATEGORY':
+      return { ...state, categories: state.categories.map(c => c.id === action.payload.id ? action.payload : c) };
     case 'DELETE_CATEGORY': {
       const categories = state.categories.filter(c => c.id !== action.payload);
       const restCats = { ...state.budget.categories };
       delete restCats[action.payload];
-      return { ...state, categories, budget: { ...state.budget, categories: restCats } };
+      const shortcutCategories = state.shortcutCategories.filter(id => id !== action.payload);
+      return { ...state, categories, budget: { ...state.budget, categories: restCats }, shortcutCategories };
     }
     case 'ADD_ACCOUNT':
       return { ...state, accounts: [...state.accounts, action.payload] };
@@ -82,6 +92,14 @@ function reducer(state: State, action: Action): State {
       return { ...state, accounts: state.accounts.filter(a => a.id !== action.payload) };
     case 'SET_BUDGET':
       return { ...state, budget: action.payload };
+    case 'SET_SHORTCUTS':
+      return { ...state, shortcutCategories: action.payload };
+    case 'ADD_MILKTEA':
+      return { ...state, milkTeas: [action.payload, ...state.milkTeas] };
+    case 'EDIT_MILKTEA':
+      return { ...state, milkTeas: state.milkTeas.map(m => m.id === action.payload.id ? action.payload : m) };
+    case 'DELETE_MILKTEA':
+      return { ...state, milkTeas: state.milkTeas.filter(m => m.id !== action.payload) };
     case 'RESET':
       return getInitialState();
     default:
@@ -90,11 +108,14 @@ function reducer(state: State, action: Action): State {
 }
 
 function getInitialState(): State {
+  const defaultShortcuts = presetCategories.filter(c => c.type === 'expense').slice(0, 8).map(c => c.id);
   return {
     transactions: [],
     categories: [...presetCategories],
     accounts: [...presetAccounts],
     budget: { monthlyTotal: undefined, categories: {} },
+    shortcutCategories: defaultShortcuts,
+    milkTeas: [],
   };
 }
 
@@ -116,11 +137,22 @@ export function mergeWithPresets(parsed: Partial<State>): State {
   const mergedCats = [...(parsed.categories || []), ...presetCategories.filter(c => !catIds.has(c.id))];
   const accIds = new Set((parsed.accounts || []).map(a => a.id));
   const mergedAccs = [...(parsed.accounts || []), ...presetAccounts.filter(a => !accIds.has(a.id))];
+  // 快捷分类：从旧数据迁移时，补全不存在的 id，确保恰好 8 个
+  let shortcuts = parsed.shortcutCategories || [];
+  const validIds = new Set(mergedCats.map(c => c.id));
+  shortcuts = shortcuts.filter(id => validIds.has(id));
+  if (shortcuts.length < 8) {
+    const fallback = mergedCats.filter(c => c.type === 'expense' && !shortcuts.includes(c.id)).slice(0, 8 - shortcuts.length);
+    shortcuts = [...shortcuts, ...fallback.map(c => c.id)];
+  }
+  shortcuts = shortcuts.slice(0, 8);
   return {
     transactions: parsed.transactions || [],
     categories: mergedCats,
     accounts: mergedAccs,
     budget: parsed.budget || { monthlyTotal: undefined, categories: {} },
+    shortcutCategories: shortcuts,
+    milkTeas: parsed.milkTeas || [],
   };
 }
 
@@ -277,6 +309,8 @@ export function exportState(state: State): string {
     categories: state.categories,
     accounts: state.accounts,
     budget: state.budget,
+    shortcutCategories: state.shortcutCategories,
+    milkTeas: state.milkTeas,
     _app: 'yunyun-bookkeeping',
     _exportedAt: new Date().toISOString(),
   }, null, 2);

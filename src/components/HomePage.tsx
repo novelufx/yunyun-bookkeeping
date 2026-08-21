@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useStore, getMonthlyStats, getBudgetStatus, formatMoney, presetCategories } from '../store.tsx';
 import type { Transaction } from '../types';
+import CategoryIcon from './CategoryIcon';
 
 interface Props {
   onAdd: (categoryId?: string) => void;
@@ -19,8 +20,10 @@ export default function HomePage({ onAdd, onOpenBudget }: Props) {
   const recentTxs = useMemo(() => state.transactions.slice(0, 10), [state.transactions]);
 
   const quickCategories = useMemo(() =>
-    state.categories.filter(c => c.type === 'expense').slice(0, 8),
-  [state.categories]);
+    state.shortcutCategories
+      .map(id => state.categories.find(c => c.id === id))
+      .filter((c): c is NonNullable<typeof c> => !!c),
+    [state.shortcutCategories, state.categories]);
 
   return (
     <div className="h-full flex flex-col px-4 pt-4 pb-2 overflow-y-auto scrollbar-hide animate-fade-in">
@@ -94,7 +97,7 @@ export default function HomePage({ onAdd, onOpenBudget }: Props) {
         <div className="grid grid-cols-4 gap-2">
           {quickCategories.map(cat => (
             <button key={cat.id} onClick={() => onAdd(cat.id)} className="cat-chip">
-              <span className="emoji">{cat.icon}</span>
+              <CategoryIcon category={cat} />
               <span className="label">{cat.name}</span>
             </button>
           ))}
@@ -136,8 +139,8 @@ function TxRow({ tx, categories, accounts }: { tx: Transaction; categories: type
   return (
     <div className="tx-item">
       <div className="flex items-center gap-3">
-        <div className="w-9 h-9 rounded-xl bg-pink-50 flex items-center justify-center text-lg">
-          {cat?.icon || '📝'}
+        <div className="w-9 h-9 rounded-xl bg-pink-50 flex items-center justify-center">
+          <CategoryIcon category={cat} fallback="📝" className="text-lg" />
         </div>
         <div>
           <p className="text-sm font-medium text-gray-800">{cat?.name || '其他'}{tx.note ? ` · ${tx.note}` : ''}</p>

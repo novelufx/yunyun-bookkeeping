@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, Trash2, Edit2 } from 'lucide-react';
 import { useStore, formatMoney } from '../store.tsx';
 import type { Transaction } from '../types';
+import CategoryIcon from './CategoryIcon';
 
 interface Props {
   onEdit: (tx: Transaction) => void;
@@ -114,8 +115,8 @@ function DetailRow({
   return (
     <div className={`tx-item ${confirming ? 'bg-rose-50/70 border-rose-200' : ''}`}>
       <div className="flex items-center gap-3 flex-1 min-w-0">
-        <div className="w-9 h-9 rounded-xl bg-pink-50 flex items-center justify-center text-lg shrink-0">
-          {cat?.icon || '📝'}
+        <div className="w-9 h-9 rounded-xl bg-pink-50 flex items-center justify-center shrink-0">
+          <CategoryIcon category={cat} className="text-lg" />
         </div>
         <div className="min-w-0">
           <p className="text-sm font-medium text-gray-800 truncate">{cat?.name || '其他'}{tx.note ? ` · ${tx.note}` : ''}</p>

@@ -1,18 +1,21 @@
 import { useState, useCallback } from 'react';
-import { Home, List, BarChart3, Settings, Plus } from 'lucide-react';
+import { Home, List, BarChart3, Settings, Plus, Coffee } from 'lucide-react';
 import { StoreProvider } from './store.tsx';
 import type { TabKey, Transaction } from './types';
 import HomePage from './components/HomePage';
 import DetailPage from './components/DetailPage';
 import StatsPage from './components/StatsPage';
 import SettingsPage from './components/SettingsPage';
+import TeaPage from './components/TeaPage';
 import AddTransaction from './components/AddTransaction';
 import BudgetPage from './components/BudgetPage';
 import ImportPage from './components/ImportPage';
+import ShortcutsPage from './components/ShortcutsPage';
 
 const tabs: { key: TabKey; label: string; icon: typeof Home }[] = [
   { key: 'home', label: '首页', icon: Home },
   { key: 'detail', label: '明细', icon: List },
+  { key: 'tea', label: '奶茶', icon: Coffee },
   { key: 'stats', label: '统计', icon: BarChart3 },
   { key: 'settings', label: '设置', icon: Settings },
 ];
@@ -22,7 +25,7 @@ function AppInner() {
   const [showAdd, setShowAdd] = useState(false);
   const [editingTx, setEditingTx] = useState<Transaction | undefined>();
   const [defaultCategoryId, setDefaultCategoryId] = useState<string | undefined>();
-  const [overlay, setOverlay] = useState<null | 'budget' | 'import'>(null);
+  const [overlay, setOverlay] = useState<null | 'budget' | 'import' | 'shortcuts'>(null);
 
   const handleAdd = useCallback((catId?: string) => {
     setDefaultCategoryId(catId);
@@ -48,12 +51,14 @@ function AppInner() {
       <div className="flex-1 overflow-hidden relative">
         {activeTab === 'home' && <HomePage onAdd={handleAdd} onOpenBudget={() => setOverlay('budget')} />}
         {activeTab === 'detail' && <DetailPage onEdit={handleEdit} />}
+        {activeTab === 'tea' && <TeaPage />}
         {activeTab === 'stats' && <StatsPage />}
-        {activeTab === 'settings' && <SettingsPage onOpenBudget={() => setOverlay('budget')} onOpenImport={() => setOverlay('import')} />}
+        {activeTab === 'settings' && <SettingsPage onOpenBudget={() => setOverlay('budget')} onOpenImport={() => setOverlay('import')} onOpenShortcuts={() => setOverlay('shortcuts')} />}
 
         {/* Budget / Import overlay pages */}
         {overlay === 'budget' && <BudgetPage onBack={() => setOverlay(null)} />}
         {overlay === 'import' && <ImportPage onBack={() => setOverlay(null)} />}
+        {overlay === 'shortcuts' && <ShortcutsPage onBack={() => setOverlay(null)} />}
 
         {/* FAB on home */}
         {activeTab === 'home' && (
@@ -76,7 +81,7 @@ function AppInner() {
             <button
               key={t.key}
               onClick={() => setActiveTab(t.key)}
-              className={`flex flex-col items-center gap-0.5 py-1 px-4 rounded-xl transition-all ${
+              className={`flex flex-col items-center gap-0.5 py-1 px-2 rounded-xl transition-all ${
                 active ? 'text-pink-500' : 'text-gray-400'
               }`}
             >

@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { X, Calendar, Wallet, StickyNote, ArrowRightLeft } from 'lucide-react';
 import { useStore, genId, getBudgetStatus, formatMoney } from '../store.tsx';
 import type { Transaction, TxType } from '../types';
+import CategoryIcon from './CategoryIcon';
 
 interface Props {
   defaultCategoryId?: string;
@@ -14,8 +15,11 @@ export default function AddTransaction({ defaultCategoryId, editingTx, onClose }
   const [txType, setTxType] = useState<TxType>(editingTx?.type || 'expense');
   const [amountStr, setAmountStr] = useState(editingTx ? (editingTx.amount / 100).toFixed(2) : '');
   const [categoryId, setCategoryId] = useState(editingTx?.categoryId || defaultCategoryId || '');
-  const [accountId, setAccountId] = useState(editingTx?.accountId || (state.accounts[0]?.id ?? ''));
-  const [toAccountId, setToAccountId] = useState(editingTx?.toAccountId || (state.accounts[1]?.id ?? ''));
+  // 默认账户 = 微信（用户主要资金在微信），fallback accounts[0]
+  const wechatId = state.accounts.find(a => a.name === '微信')?.id || state.accounts[0]?.id || '';
+  const nonWechatId = state.accounts.find(a => a.id !== wechatId)?.id || state.accounts[1]?.id || '';
+  const [accountId, setAccountId] = useState(editingTx?.accountId || wechatId);
+  const [toAccountId, setToAccountId] = useState(editingTx?.toAccountId || nonWechatId);
   const [date, setDate] = useState(editingTx?.date || new Date().toISOString().slice(0, 10));
   const [note, setNote] = useState(editingTx?.note || '');
   const [showNoteInput, setShowNoteInput] = useState(false);
@@ -161,7 +165,7 @@ export default function AddTransaction({ defaultCategoryId, editingTx, onClose }
                     onClick={() => setCategoryId(cat.id)}
                     className={`cat-chip ${categoryId === cat.id ? 'bg-pink-100 border-pink-300' : ''}`}
                   >
-                    <span className="emoji">{cat.icon}</span>
+                    <CategoryIcon category={cat} />
                     <span className="label">{cat.name}</span>
                   </button>
                 ))}

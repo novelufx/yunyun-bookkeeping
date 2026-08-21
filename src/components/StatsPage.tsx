@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useStore, getMonthlyStats, getCategoryStats, getDailyStats, getBudgetStatus, formatMoney, recalcAccounts } from '../store.tsx';
+import CategoryIcon from './CategoryIcon';
 
 export default function StatsPage() {
   const { state } = useStore();
@@ -133,14 +134,17 @@ export default function StatsPage() {
               </div>
             </div>
             <div className="flex-1 space-y-1.5 min-w-0">
-              {catEntries.slice(0, 6).map(c => (
-                <div key={c.id} className="flex items-center gap-2">
-                  <span className="text-sm">{c.icon}</span>
-                  <span className="text-xs text-gray-600 flex-1 truncate">{c.name}</span>
-                  <span className="text-xs font-medium text-gray-500">{c.pct.toFixed(0)}%</span>
-                  <span className="text-xs text-gray-400">¥{formatMoney(c.amount)}</span>
-                </div>
-              ))}
+              {catEntries.slice(0, 6).map(c => {
+                const cat = state.categories.find(cc => cc.id === c.id);
+                return (
+                  <div key={c.id} className="flex items-center gap-2">
+                    <CategoryIcon category={cat} className="text-sm" />
+                    <span className="text-xs text-gray-600 flex-1 truncate">{c.name}</span>
+                    <span className="text-xs font-medium text-gray-500">{c.pct.toFixed(0)}%</span>
+                    <span className="text-xs text-gray-400">¥{formatMoney(c.amount)}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
