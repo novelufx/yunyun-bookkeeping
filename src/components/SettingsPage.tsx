@@ -109,6 +109,29 @@ export default function SettingsPage({ onOpenBudget, onOpenImport, onOpenShortcu
     reader.readAsText(file);
   };
 
+  /** 粘贴文本恢复（微信里文件被拦截时的通道） */
+  const [showPaste, setShowPaste] = useState(false);
+  const [pasteText, setPasteText] = useState('');
+
+  const handlePasteRestore = () => {
+    const text = pasteText.trim();
+    if (!text) return;
+    try {
+      const parsed = JSON.parse(text);
+      const isOurs = parsed && parsed._app === 'yunyun-bookkeeping';
+      const msg = isOurs
+        ? `导入备份将覆盖当前所有数据，确定继续吗？`
+        : '这似乎不是「芸芸的记账本」的备份文件，仍要导入并覆盖当前数据吗？';
+      if (!confirm(msg)) return;
+      dispatch({ type: 'LOAD', payload: mergeWithPresets(parsed) });
+      setShowPaste(false);
+      setPasteText('');
+      alert('备份已成功恢复 💕');
+    } catch {
+      alert('粘贴的内容不是有效的备份 JSON');
+    }
+  };
+
   return (
     <div className="h-full overflow-y-auto scrollbar-hide animate-fade-in px-4 pt-4 pb-4">
       <h1 className="text-lg font-bold text-gray-800 mb-4">设置 ⚙️</h1>
@@ -284,6 +307,27 @@ export default function SettingsPage({ onOpenBudget, onOpenImport, onOpenShortcu
             className="hidden"
             onChange={handleImportBackup}
           />
+          <button
+            onClick={() => setShowPaste(v => !v)}
+            className="w-full flex items-center gap-3 p-2.5 rounded-xl bg-white/80 border border-pink-200/60 active:bg-pink-50 transition-colors text-left"
+          >
+            <span className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center text-base">📋</span>
+            <span className="flex-1 text-sm text-gray-700">粘贴备份内容恢复</span>
+            <span className="text-[10px] text-pink-400">{showPaste ? '收起' : '粘贴文本 ›'}</span>
+          </button>
+          {showPaste && (
+            <div className="p-2.5 rounded-xl bg-white/80 border border-pink-200/60">
+              <textarea
+                value={pasteText}
+                onChange={e => setPasteText(e.target.value)}
+                placeholder="把复制的备份内容粘贴到这里…"
+                className="w-full h-20 p-2 rounded-lg bg-white border border-pink-100 text-[10px] font-mono text-gray-600 outline-none focus:border-pink-300"
+              />
+              <button onClick={handlePasteRestore} className="w-full mt-2 py-2 rounded-lg bg-pink-400 text-white text-xs font-bold active:bg-pink-500 transition-colors">
+                恢复
+              </button>
+            </div>
+          )}
         </div>
         <p className="text-[10px] text-gray-400 px-2 mt-1.5 leading-relaxed">
           ℹ️ 奶茶日历的图片仅保存在本机，不参与备份导出。换手机或清除浏览器数据会丢失奶茶图片。

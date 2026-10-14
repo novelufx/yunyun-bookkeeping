@@ -1,11 +1,12 @@
 import { useMemo, useState, useEffect } from 'react';
-import { ChevronLeft, HardDrive, Check, AlertTriangle, Download, RefreshCw, FileJson, FileSpreadsheet } from 'lucide-react';
+import { ChevronLeft, HardDrive, Check, AlertTriangle, Download, RefreshCw, FileJson, FileSpreadsheet, ClipboardCopy } from 'lucide-react';
 import {
   useStore, exportState, exportCsv, markExported, loadState, mergeWithPresets, formatMoney,
 } from '../store.tsx';
 import {
   fingerprintOf, inspectSlots, readMeta, shouldRemindBackup, estimateUsage, formatBytes,
 } from '../utils/storageHealth';
+import { copyToClipboard, downloadFile, stampNow } from '../utils/exportHelper';
 import { countImages } from '../utils/imageDb';
 
 interface Props { onBack: () => void }
@@ -13,7 +14,9 @@ interface Props { onBack: () => void }
 export default function StorageDetailPage({ onBack }: Props) {
   const { state, dispatch } = useStore();
   const [imgCount, setImgCount] = useState<number | null>(null);
-  const [restored, setRestored] = useState<string | null>(null);
+  const [restored, setRestored] = useState<number | null>(null);
+  const [showRaw, setShowRaw] = useState(false);
+  const [copyTip, setCopyTip] = useState<string | null>(null);
   const [, force] = useState(0);
 
   useEffect(() => {
@@ -26,30 +29,35 @@ export default function StorageDetailPage({ onBack }: Props) {
   const reminder = shouldRemindBackup(meta);
   const usage = estimateUsage();
   const healthyCount = slots.filter(s => s.exists && s.healthy).length;
+  const rawJson = useMemo(() => exportState(state), [state]);
+  const stamp = stampNow();
 
   const download = (content: string, filename: string, type: string) => {
-    const blob = new Blob([content], { type });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 2000);
+    downloadFile(content, filename, type);
     markExported();
-    setRestored(Date.now() as unknown as string);
+    setRestored(Date.now());
   };
 
-  const d = new Date();
-  const stamp = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+  /** 微信内唯一可靠的导出通道（Blob 下载被微信拦截） */
+  const doCopy = async () => {
+    const ok = await copyToClipboard(rawJson);
+    if (ok) {
+      markExported();
+      setRestored(Date.now());
+      setCopyTip('已复制 💕');
+      setTimeout(() => setCopyTip(null), 4000);
+    } else {
+      setCopyTip('自动复制失败，请长按下方文本框手动复制');
+      setShowRaw(true);
+    }
+  };
 
   const handleRestore = () => {
     const { state: best, recoveredFrom } = loadState();
     if (!recoveredFrom) return;
     if (!confirm(`将从「${recoveredFrom.includes('bk') ? '备份 ' + (recoveredFrom.slice(-1)) : '主存储'}」恢复 ${best.transactions.length} 笔账目，覆盖当前数据。确定继续吗？`)) return;
     dispatch({ type: 'LOAD', payload: mergeWithPresets(best) });
-    setRestored(Date.now() as unknown as string);
+    setRestored(Date.now());
     alert('已恢复 💕');
   };
 
@@ -138,13 +146,25 @@ export default function StorageDetailPage({ onBack }: Props) {
             <p className="text-xs font-bold text-gray-700 mb-2.5">导出备份</p>
             <div className="space-y-2">
               <button
+                onClick={doCopy}
+                className="w-full flex items-center gap-2.5 p-3 rounded-xl bg-pink-50 border border-pink-300 active:bg-pink-100 transition-colors text-left"
+              >
+                <ClipboardCopy size={16} className="text-pink-500 shrink-0" />
+                <div className="flex-1">
+                  <p className="text-xs font-semibold text-pink-600">
+                    {copyTip || '复制备份到剪贴板'}
+                  </p>
+                  <p className="text-[10px] text-pink-400">微信里推荐用这个 · 粘贴到文件传输助手</p>
+                </div>
+              </button>
+              <button
                 onClick={() => download(exportState(state), `yunyun-bookkeeping-${stamp}.json`, 'application/json')}
                 className="w-full flex items-center gap-2.5 p-3 rounded-xl bg-white/85 border border-pink-200/60 active:bg-pink-50 transition-colors text-left"
               >
-                <FileJson size={16} className="text-pink-500 shrink-0" />
+                <FileJson size={16} className="text-gray-500 shrink-0" />
                 <div className="flex-1">
-                  <p className="text-xs font-semibold text-gray-700">JSON 备份（可完整还原）</p>
-                  <p className="text-[10px] text-gray-400">含分类/账户/预算/快捷设置，换设备用这个</p>
+                  <p className="text-xs font-semibold text-gray-700">下载 JSON 文件</p>
+                  <p className="text-[10px] text-gray-400">微信内可能被拦截，浏览器可用</p>
                 </div>
                 <Download size={14} className="text-pink-400 shrink-0" />
               </button>
@@ -159,6 +179,14 @@ export default function StorageDetailPage({ onBack }: Props) {
                 </div>
                 <Download size={14} className="text-pink-400 shrink-0" />
               </button>
+              {showRaw && (
+                <textarea
+                  readOnly
+                  value={rawJson}
+                  onFocus={e => e.currentTarget.select()}
+                  className="w-full h-24 p-2 rounded-xl bg-white/80 border border-pink-200 text-[9px] font-mono text-gray-500 outline-none"
+                />
+              )}
             </div>
             <div className="flex items-start gap-1.5 mt-2.5 px-1">
               <HardDrive size={12} className="text-gray-300 shrink-0 mt-0.5" />
