@@ -81,6 +81,22 @@ function parseDate(text: string, today: Date): { date: string; rest: string } {
   return { date, rest };
 }
 
+/**
+ * 金额提取策略（按优先级）：
+ *  1. 行首带符号金额： "-20.60 711 关东煮" → 20.60
+ *  2. 任意带符号数字：  "-20.60 711 关东煮" → 20.60（带符号的一定是金额，备注里的裸数字不算）
+ *  3. 最后一个数字：    "餐饮 35" → 35（兼容「分类在前、金额在后」的旧格式）
+ */
+function pickAmount(rest: string): string | null {
+  const head = rest.match(/^\s*([+-]?\d+(?:\.\d+)?)(?=\s|$)/);
+  if (head) return head[1];
+  const all = rest.match(/[+-]?\d+(?:\.\d+)?/g);
+  if (!all || all.length === 0) return null;
+  const signed = all.filter(x => /^[+-]/.test(x));
+  if (signed.length) return signed[signed.length - 1];
+  return all[all.length - 1];
+}
+
 export function parseImportText(raw: string, categories: Category[]): ParseResult {
   const today = new Date();
   const items: ParsedItem[] = [];
@@ -93,13 +109,13 @@ export function parseImportText(raw: string, categories: Category[]): ParseResul
       // 日期
       const { date, rest } = parseDate(line, today);
 
-      // 金额（取剩余文本中最后一个带可选符号的数字）
-      const amounts = rest.match(/-?\d+(?:\.\d+)?/g);
-      if (!amounts || amounts.length === 0) {
+      // 金额（行首带符号优先，否则取最后一个数字）
+      // 注意：正则必须带上 + 号，否则 "+1250" 会退化成无符号数字、收入被误判为支出
+      const amtStr = pickAmount(rest);
+      if (amtStr === null) {
         errors.push({ raw: line, reason: '没找到金额' });
         continue;
       }
-      const amtStr = amounts[amounts.length - 1];
       const negative = amtStr.startsWith('-');
       const positive = amtStr.startsWith('+');
       const amount = Math.round(parseFloat(amtStr.replace(/[+-]/, '')) * 100);
@@ -118,7 +134,7 @@ export function parseImportText(raw: string, categories: Category[]): ParseResul
 
       // 备注：去除日期、金额、分类关键词后的剩余
       let note = line;
-      note = note.replace(/-?\d+(?:\.\d+)?/g, ' '); // 去金额
+      note = note.replace(/[+-]?\d+(?:\.\d+)?/g, ' '); // 去金额
       note = note.replace(/(\d{4})[.\/-]\d{1,2}[.\/-]\d{1,2}/g, ' ');
       note = note.replace(/\d{1,2}[.\/-]\d{1,2}/g, ' ');
       note = note.replace(/\d{1,2}\s*月\s*\d{1,2}\s*[日号]?/g, ' ');

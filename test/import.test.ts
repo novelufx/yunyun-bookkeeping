@@ -44,5 +44,35 @@ eq('自定义分类 羽毛球 归类正确', r4.items[0]?.categoryId, 'c-badmint
 const r5 = parseImportText('8.5 餐饮 35 和朋友', presetCategories);
 eq('备注保留非分类词「和朋友」', r5.items[0]?.note, '和朋友');
 
+// 回归：无分类词的加号金额必须判为收入（本次数据恢复依赖此逻辑）
+const r6 = parseImportText('2026-09-07 +1250.00 餐标', presetCategories);
+eq('纯 + 金额判为收入', r6.items[0]?.type, 'income');
+eq('纯 + 金额金额正确', r6.items[0]?.amount, 125000);
+eq('纯 + 金额备注保留', r6.items[0]?.note, '餐标');
+
+const r7 = parseImportText('2026-10-07 +690.86 十月上旬补款', presetCategories);
+eq('收入归入其他收入', r7.items[0]?.categoryId, 'c-other-inc');
+eq('收入备注完整', r7.items[0]?.note, '十月上旬补款');
+
+// 回归：金额必须是最后一个数字，备注含数字不影响金额
+const r8 = parseImportText('2026-09-12 居住 -60.00 酒店', presetCategories);
+eq('分类 居住 金额正确', [r8.items[0]?.categoryId, r8.items[0]?.amount], ['c-home', 6000]);
+eq('备注保留 酒店', r8.items[0]?.note, '酒店');
+
+// 回归：备注里的数字不能被当成金额（711 / 2 水 / 10.8-10.20 这类）
+const r9 = parseImportText('2026-09-13 餐饮 -20.60 711 关东煮 钙奶饼干', presetCategories);
+eq('备注含 711 时金额仍为 20.60', r9.items[0]?.amount, 2060);
+eq('备注含 711 时日期正确', r9.items[0]?.date, '2026-09-13');
+eq('备注保留非数字部分', r9.items[0]?.note?.includes('关东煮'), true);
+
+const r10 = parseImportText('2026-10-08 购物 -7.00 超市 雪糕 2 水', presetCategories);
+eq('备注含「2水」时金额仍为 7.00', r10.items[0]?.amount, 700);
+
+// 回归：原始格式「分类在前、金额在后」仍然正常（取最后一个数字）
+const r11 = parseImportText('8.5 餐饮 52.5', presetCategories);
+eq('旧格式 8.5 餐饮 52.5 金额正确', r11.items[0]?.amount, 5250);
+const r12 = parseImportText('8.5 和朋友 餐饮 52.5 吃了饭', presetCategories);
+eq('旧格式含多余数字仍取末位金额', r12.items[0]?.amount, 5250);
+
 console.log(`\n解析器测试：${pass} 通过 / ${fail} 失败`);
 if (fail > 0) process.exit(1);
