@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { ChevronLeft, Check, AlertCircle, FileText, Wallet } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { ChevronLeft, Check, AlertCircle, FileText, Wallet, FolderOpen } from 'lucide-react';
 import { useStore, genId, formatMoney } from '../store.tsx';
 import { parseImportText } from '../utils/importParser';
 import type { Transaction } from '../types';
@@ -21,9 +21,27 @@ export default function ImportPage({ onBack }: Props) {
   const [parsed, setParsed] = useState<ReturnType<typeof parseImportText> | null>(null);
   const [selected, setSelected] = useState<Record<number, boolean>>({});
   const [imported, setImported] = useState<number | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const catName = (id: string) =>
     state.categories.find(c => c.id === id)?.name || '其他';
+
+  /** 从文件读取账本文本（txt/csv/md 均可，内容格式相同） */
+  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const content = String(reader.result ?? '').replace(/^\uFEFF/, '');
+      setText(content);
+      setParsed(null);
+      setSelected({});
+      setImported(null);
+    };
+    reader.onerror = () => alert('文件读取失败，请重试');
+    reader.readAsText(file, 'UTF-8');
+    e.target.value = '';
+  };
 
   const handleParse = () => {
     if (!text.trim()) return;

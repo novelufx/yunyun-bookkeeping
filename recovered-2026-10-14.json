@@ -1,0 +1,910 @@
+{
+  "transactions": [
+    {
+      "id": "r001",
+      "type": "expense",
+      "amount": 1100,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-09-07",
+      "note": "自选水饺",
+      "createdAt": "2026-09-07T12:00:00.000Z"
+    },
+    {
+      "id": "r002",
+      "type": "expense",
+      "amount": 1240,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-09-07",
+      "note": "自选",
+      "createdAt": "2026-09-07T12:00:00.000Z"
+    },
+    {
+      "id": "r003",
+      "type": "income",
+      "amount": 125000,
+      "categoryId": "c-other-inc",
+      "accountId": "a-wechat",
+      "date": "2026-09-07",
+      "note": "餐标",
+      "createdAt": "2026-09-07T12:00:00.000Z"
+    },
+    {
+      "id": "r004",
+      "type": "expense",
+      "amount": 1190,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-09-08",
+      "note": "百香果米线",
+      "createdAt": "2026-09-08T12:00:00.000Z"
+    },
+    {
+      "id": "r005",
+      "type": "expense",
+      "amount": 800,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-09-08",
+      "note": "鲜肉馄饨",
+      "createdAt": "2026-09-08T12:00:00.000Z"
+    },
+    {
+      "id": "r006",
+      "type": "expense",
+      "amount": 1000,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-09-09",
+      "note": "零",
+      "createdAt": "2026-09-09T12:00:00.000Z"
+    },
+    {
+      "id": "r007",
+      "type": "expense",
+      "amount": 1100,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-09-09",
+      "note": "土豆泥拌粉",
+      "createdAt": "2026-09-09T12:00:00.000Z"
+    },
+    {
+      "id": "r008",
+      "type": "expense",
+      "amount": 900,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-09-09",
+      "note": "蘸水",
+      "createdAt": "2026-09-09T12:00:00.000Z"
+    },
+    {
+      "id": "r009",
+      "type": "expense",
+      "amount": 1000,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-09-10",
+      "note": "智慧餐厅 玉米捞面 人上人",
+      "createdAt": "2026-09-10T12:00:00.000Z"
+    },
+    {
+      "id": "r010",
+      "type": "expense",
+      "amount": 1450,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-09-10",
+      "note": "智慧餐厅 糯米 顶级",
+      "createdAt": "2026-09-10T12:00:00.000Z"
+    },
+    {
+      "id": "r011",
+      "type": "expense",
+      "amount": 500,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-09-11",
+      "note": "烤玉米 拉完了",
+      "createdAt": "2026-09-11T12:00:00.000Z"
+    },
+    {
+      "id": "r012",
+      "type": "expense",
+      "amount": 790,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-09-11",
+      "note": "禾捞番茄鸡蛋面",
+      "createdAt": "2026-09-11T12:00:00.000Z"
+    },
+    {
+      "id": "r013",
+      "type": "expense",
+      "amount": 790,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-09-11",
+      "note": "禾捞番茄鸡蛋面",
+      "createdAt": "2026-09-11T12:00:00.000Z"
+    },
+    {
+      "id": "r014",
+      "type": "expense",
+      "amount": 1100,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-09-12",
+      "note": "六餐 牛杂汤面 顶级",
+      "createdAt": "2026-09-12T12:00:00.000Z"
+    },
+    {
+      "id": "r015",
+      "type": "expense",
+      "amount": 1200,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-09-12",
+      "note": "六餐 土豆泥焖面",
+      "createdAt": "2026-09-12T12:00:00.000Z"
+    },
+    {
+      "id": "r016",
+      "type": "expense",
+      "amount": 6000,
+      "categoryId": "c-home",
+      "accountId": "a-wechat",
+      "date": "2026-09-12",
+      "note": "酒店",
+      "createdAt": "2026-09-12T12:00:00.000Z"
+    },
+    {
+      "id": "r017",
+      "type": "expense",
+      "amount": 2060,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-09-13",
+      "note": "关东煮 钙奶饼干",
+      "createdAt": "2026-09-13T12:00:00.000Z"
+    },
+    {
+      "id": "r018",
+      "type": "expense",
+      "amount": 390,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-09-14",
+      "note": "咸蛋黄松松 团",
+      "createdAt": "2026-09-14T12:00:00.000Z"
+    },
+    {
+      "id": "r019",
+      "type": "expense",
+      "amount": 1050,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-09-14",
+      "note": "五餐 辣番茄 麻将火鸡油条拌面",
+      "createdAt": "2026-09-14T12:00:00.000Z"
+    },
+    {
+      "id": "r020",
+      "type": "expense",
+      "amount": 1300,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-09-14",
+      "note": "五餐 猪排",
+      "createdAt": "2026-09-14T12:00:00.000Z"
+    },
+    {
+      "id": "r021",
+      "type": "expense",
+      "amount": 890,
+      "categoryId": "c-drink",
+      "accountId": "a-wechat",
+      "date": "2026-09-15",
+      "note": "库迪 百香果芭乐",
+      "createdAt": "2026-09-15T12:00:00.000Z"
+    },
+    {
+      "id": "r022",
+      "type": "expense",
+      "amount": 1000,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-09-15",
+      "note": "咸蛋黄 团",
+      "createdAt": "2026-09-15T12:00:00.000Z"
+    },
+    {
+      "id": "r023",
+      "type": "expense",
+      "amount": 1300,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-09-15",
+      "note": "蔓越莓轻",
+      "createdAt": "2026-09-15T12:00:00.000Z"
+    },
+    {
+      "id": "r024",
+      "type": "expense",
+      "amount": 550,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-09-16",
+      "note": "破皮 子 桂花豆沙 豆角",
+      "createdAt": "2026-09-16T12:00:00.000Z"
+    },
+    {
+      "id": "r025",
+      "type": "expense",
+      "amount": 300,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-09-16",
+      "note": "雪糕 烤肠",
+      "createdAt": "2026-09-16T12:00:00.000Z"
+    },
+    {
+      "id": "r026",
+      "type": "expense",
+      "amount": 1300,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-09-16",
+      "note": "麻辣鸭血米线馄饨",
+      "createdAt": "2026-09-16T12:00:00.000Z"
+    },
+    {
+      "id": "r027",
+      "type": "expense",
+      "amount": 1000,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-09-16",
+      "note": "蔓越莓轻",
+      "createdAt": "2026-09-16T12:00:00.000Z"
+    },
+    {
+      "id": "r028",
+      "type": "expense",
+      "amount": 200,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-09-17",
+      "note": "冰绿豆沙",
+      "createdAt": "2026-09-17T12:00:00.000Z"
+    },
+    {
+      "id": "r029",
+      "type": "expense",
+      "amount": 200,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-09-17",
+      "note": "冰豆浆",
+      "createdAt": "2026-09-17T12:00:00.000Z"
+    },
+    {
+      "id": "r030",
+      "type": "expense",
+      "amount": 650,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-09-17",
+      "note": "抹茶奶冻三明治",
+      "createdAt": "2026-09-17T12:00:00.000Z"
+    },
+    {
+      "id": "r031",
+      "type": "expense",
+      "amount": 650,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-09-17",
+      "note": "可可奶冻三明治",
+      "createdAt": "2026-09-17T12:00:00.000Z"
+    },
+    {
+      "id": "r032",
+      "type": "expense",
+      "amount": 1600,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-09-18",
+      "note": "余悦番茄麻辣烫",
+      "createdAt": "2026-09-18T12:00:00.000Z"
+    },
+    {
+      "id": "r033",
+      "type": "expense",
+      "amount": 2500,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-09-18",
+      "note": "余悦麻辣拌",
+      "createdAt": "2026-09-18T12:00:00.000Z"
+    },
+    {
+      "id": "r034",
+      "type": "expense",
+      "amount": 600,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-09-18",
+      "note": "烤玉米",
+      "createdAt": "2026-09-18T12:00:00.000Z"
+    },
+    {
+      "id": "r035",
+      "type": "expense",
+      "amount": 2264,
+      "categoryId": "c-shopping",
+      "accountId": "a-wechat",
+      "date": "2026-09-19",
+      "note": "好想来零",
+      "createdAt": "2026-09-19T12:00:00.000Z"
+    },
+    {
+      "id": "r036",
+      "type": "expense",
+      "amount": 300,
+      "categoryId": "c-drink",
+      "accountId": "a-wechat",
+      "date": "2026-09-19",
+      "note": "蜜雪 柠檬水",
+      "createdAt": "2026-09-19T12:00:00.000Z"
+    },
+    {
+      "id": "r037",
+      "type": "expense",
+      "amount": 300,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-09-19",
+      "note": "蜜雪 茉莉绿茶",
+      "createdAt": "2026-09-19T12:00:00.000Z"
+    },
+    {
+      "id": "r038",
+      "type": "expense",
+      "amount": 600,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-09-19",
+      "note": "烤玉米",
+      "createdAt": "2026-09-19T12:00:00.000Z"
+    },
+    {
+      "id": "r039",
+      "type": "expense",
+      "amount": 200,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-09-19",
+      "note": "甜序堂 泡芙",
+      "createdAt": "2026-09-19T12:00:00.000Z"
+    },
+    {
+      "id": "r040",
+      "type": "expense",
+      "amount": 1590,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-09-19",
+      "note": "熊麻婆农家一碗香 盖面",
+      "createdAt": "2026-09-19T12:00:00.000Z"
+    },
+    {
+      "id": "r041",
+      "type": "expense",
+      "amount": 1490,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-09-19",
+      "note": "熊麻婆 肉酱拌面",
+      "createdAt": "2026-09-19T12:00:00.000Z"
+    },
+    {
+      "id": "r042",
+      "type": "expense",
+      "amount": 1000,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-09-19",
+      "note": "临榆炸鸡",
+      "createdAt": "2026-09-19T12:00:00.000Z"
+    },
+    {
+      "id": "r043",
+      "type": "expense",
+      "amount": 350,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-09-20",
+      "note": "八餐 奥尔良馅饼",
+      "createdAt": "2026-09-20T12:00:00.000Z"
+    },
+    {
+      "id": "r044",
+      "type": "expense",
+      "amount": 1490,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-09-20",
+      "note": "超长蛋挞",
+      "createdAt": "2026-09-20T12:00:00.000Z"
+    },
+    {
+      "id": "r045",
+      "type": "expense",
+      "amount": 600,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-09-20",
+      "note": "寿司",
+      "createdAt": "2026-09-20T12:00:00.000Z"
+    },
+    {
+      "id": "r046",
+      "type": "expense",
+      "amount": 600,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-09-20",
+      "note": "烤玉米",
+      "createdAt": "2026-09-20T12:00:00.000Z"
+    },
+    {
+      "id": "r047",
+      "type": "expense",
+      "amount": 300,
+      "categoryId": "c-shopping",
+      "accountId": "a-wechat",
+      "date": "2026-09-21",
+      "note": "雪糕 奶提子 优麦乳",
+      "createdAt": "2026-09-21T12:00:00.000Z"
+    },
+    {
+      "id": "r048",
+      "type": "expense",
+      "amount": 600,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-09-21",
+      "note": "凉拌",
+      "createdAt": "2026-09-21T12:00:00.000Z"
+    },
+    {
+      "id": "r049",
+      "type": "expense",
+      "amount": 1420,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-09-21",
+      "note": "鸡蛋火腿帕尼尼 原味肠粉",
+      "createdAt": "2026-09-21T12:00:00.000Z"
+    },
+    {
+      "id": "r050",
+      "type": "expense",
+      "amount": 1000,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-09-22",
+      "note": "都市肉肠",
+      "createdAt": "2026-09-22T12:00:00.000Z"
+    },
+    {
+      "id": "r051",
+      "type": "expense",
+      "amount": 490,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-09-22",
+      "note": "金枪鱼 团",
+      "createdAt": "2026-09-22T12:00:00.000Z"
+    },
+    {
+      "id": "r052",
+      "type": "expense",
+      "amount": 1000,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-09-22",
+      "note": "凉拌",
+      "createdAt": "2026-09-22T12:00:00.000Z"
+    },
+    {
+      "id": "r053",
+      "type": "expense",
+      "amount": 350,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-09-23",
+      "note": "酸奶大麻花",
+      "createdAt": "2026-09-23T12:00:00.000Z"
+    },
+    {
+      "id": "r054",
+      "type": "expense",
+      "amount": 400,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-09-23",
+      "note": "烤玉米",
+      "createdAt": "2026-09-23T12:00:00.000Z"
+    },
+    {
+      "id": "r055",
+      "type": "expense",
+      "amount": 1870,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-09-23",
+      "note": "特色面皮 招牌面皮",
+      "createdAt": "2026-09-23T12:00:00.000Z"
+    },
+    {
+      "id": "r056",
+      "type": "income",
+      "amount": 69086,
+      "categoryId": "c-other-inc",
+      "accountId": "a-wechat",
+      "date": "2026-10-07",
+      "note": "十月上旬补款",
+      "createdAt": "2026-10-07T12:00:00.000Z"
+    },
+    {
+      "id": "r057",
+      "type": "expense",
+      "amount": 700,
+      "categoryId": "c-shopping",
+      "accountId": "a-wechat",
+      "date": "2026-10-08",
+      "note": "雪糕 矿泉水",
+      "createdAt": "2026-10-08T12:00:00.000Z"
+    },
+    {
+      "id": "r058",
+      "type": "expense",
+      "amount": 1100,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-10-08",
+      "note": "三餐 肥汁肉酱米线",
+      "createdAt": "2026-10-08T12:00:00.000Z"
+    },
+    {
+      "id": "r059",
+      "type": "expense",
+      "amount": 1490,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-10-08",
+      "note": "三餐 猪脚 肠粉",
+      "createdAt": "2026-10-08T12:00:00.000Z"
+    },
+    {
+      "id": "r060",
+      "type": "expense",
+      "amount": 1000,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-10-09",
+      "note": "二餐 炒河粉",
+      "createdAt": "2026-10-09T12:00:00.000Z"
+    },
+    {
+      "id": "r061",
+      "type": "expense",
+      "amount": 1200,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-10-09",
+      "note": "二餐 双拼",
+      "createdAt": "2026-10-09T12:00:00.000Z"
+    },
+    {
+      "id": "r062",
+      "type": "expense",
+      "amount": 4400,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-10-10",
+      "note": "鸡公煲",
+      "createdAt": "2026-10-10T12:00:00.000Z"
+    },
+    {
+      "id": "r063",
+      "type": "expense",
+      "amount": 500,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-10-11",
+      "note": "烤玉米 香蕉",
+      "createdAt": "2026-10-11T12:00:00.000Z"
+    },
+    {
+      "id": "r064",
+      "type": "expense",
+      "amount": 900,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-10-11",
+      "note": "肉夹馍",
+      "createdAt": "2026-10-11T12:00:00.000Z"
+    },
+    {
+      "id": "r065",
+      "type": "expense",
+      "amount": 6000,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-10-11",
+      "note": "家常 鱼香茄子 小辣椒",
+      "createdAt": "2026-10-11T12:00:00.000Z"
+    },
+    {
+      "id": "r066",
+      "type": "expense",
+      "amount": 1990,
+      "categoryId": "c-entertain",
+      "accountId": "a-wechat",
+      "date": "2026-10-11",
+      "note": "拼豆",
+      "createdAt": "2026-10-11T12:00:00.000Z"
+    },
+    {
+      "id": "r067",
+      "type": "expense",
+      "amount": 990,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-10-12",
+      "note": "玖铭炸鸡腿",
+      "createdAt": "2026-10-12T12:00:00.000Z"
+    },
+    {
+      "id": "r068",
+      "type": "expense",
+      "amount": 1180,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-10-12",
+      "note": "南极磷虾捞面",
+      "createdAt": "2026-10-12T12:00:00.000Z"
+    },
+    {
+      "id": "r069",
+      "type": "expense",
+      "amount": 1380,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-10-12",
+      "note": "鱿鱼捞面",
+      "createdAt": "2026-10-12T12:00:00.000Z"
+    },
+    {
+      "id": "r070",
+      "type": "expense",
+      "amount": 700,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-10-13",
+      "note": "幸运咖黑莓 大米雪糕",
+      "createdAt": "2026-10-13T12:00:00.000Z"
+    },
+    {
+      "id": "r071",
+      "type": "expense",
+      "amount": 900,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-10-13",
+      "note": "石板鸡蛋",
+      "createdAt": "2026-10-13T12:00:00.000Z"
+    },
+    {
+      "id": "r072",
+      "type": "expense",
+      "amount": 1100,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-10-13",
+      "note": "茄子肉酱捞面",
+      "createdAt": "2026-10-13T12:00:00.000Z"
+    },
+    {
+      "id": "r073",
+      "type": "expense",
+      "amount": 600,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-10-14",
+      "note": "绿色心情 巧克力苫芋泥糯糍",
+      "createdAt": "2026-10-14T12:00:00.000Z"
+    },
+    {
+      "id": "r074",
+      "type": "expense",
+      "amount": 1100,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-10-14",
+      "note": "烤鸭",
+      "createdAt": "2026-10-14T12:00:00.000Z"
+    },
+    {
+      "id": "r075",
+      "type": "expense",
+      "amount": 1100,
+      "categoryId": "c-food",
+      "accountId": "a-wechat",
+      "date": "2026-10-14",
+      "note": "石板鸡蛋豆腐双拼",
+      "createdAt": "2026-10-14T12:00:00.000Z"
+    }
+  ],
+  "categories": [
+    {
+      "id": "c-food",
+      "name": "餐饮",
+      "type": "expense",
+      "icon": "🍱",
+      "sort": 0
+    },
+    {
+      "id": "c-transport",
+      "name": "交通",
+      "type": "expense",
+      "icon": "🚗",
+      "sort": 1
+    },
+    {
+      "id": "c-shopping",
+      "name": "购物",
+      "type": "expense",
+      "icon": "🛍️",
+      "sort": 2
+    },
+    {
+      "id": "c-home",
+      "name": "居住",
+      "type": "expense",
+      "icon": "🏠",
+      "sort": 3
+    },
+    {
+      "id": "c-edu",
+      "name": "教育",
+      "type": "expense",
+      "icon": "📚",
+      "sort": 4
+    },
+    {
+      "id": "c-medical",
+      "name": "医疗",
+      "type": "expense",
+      "icon": "💊",
+      "sort": 5
+    },
+    {
+      "id": "c-entertain",
+      "name": "娱乐",
+      "type": "expense",
+      "icon": "🎮",
+      "sort": 6
+    },
+    {
+      "id": "c-social",
+      "name": "人情",
+      "type": "expense",
+      "icon": "🎁",
+      "sort": 7
+    },
+    {
+      "id": "c-other-exp",
+      "name": "其他",
+      "type": "expense",
+      "icon": "📝",
+      "sort": 8
+    },
+    {
+      "id": "c-salary",
+      "name": "工资",
+      "type": "income",
+      "icon": "💰",
+      "sort": 9
+    },
+    {
+      "id": "c-parttime",
+      "name": "兼职",
+      "type": "income",
+      "icon": "💼",
+      "sort": 10
+    },
+    {
+      "id": "c-refund",
+      "name": "退款",
+      "type": "income",
+      "icon": "↩️",
+      "sort": 11
+    },
+    {
+      "id": "c-other-inc",
+      "name": "其他",
+      "type": "income",
+      "icon": "✨",
+      "sort": 12
+    },
+    {
+      "id": "c-drink",
+      "name": "饮料",
+      "type": "expense",
+      "icon": "🥤",
+      "sort": 50
+    }
+  ],
+  "accounts": [
+    {
+      "id": "a-cash",
+      "name": "现金",
+      "type": "cash",
+      "icon": "💵",
+      "balance": 0,
+      "initialBalance": 0,
+      "sort": 0
+    },
+    {
+      "id": "a-wechat",
+      "name": "微信",
+      "type": "wechat",
+      "icon": "💬",
+      "balance": 0,
+      "initialBalance": 0,
+      "sort": 1
+    },
+    {
+      "id": "a-alipay",
+      "name": "支付宝",
+      "type": "alipay",
+      "icon": "🔵",
+      "balance": 0,
+      "initialBalance": 0,
+      "sort": 2
+    },
+    {
+      "id": "a-bank",
+      "name": "银行卡",
+      "type": "bank",
+      "icon": "💳",
+      "balance": 0,
+      "initialBalance": 0,
+      "sort": 3
+    }
+  ],
+  "budget": {
+    "categories": {}
+  },
+  "shortcutCategories": [
+    "c-food",
+    "c-transport",
+    "c-shopping",
+    "c-home",
+    "c-edu",
+    "c-medical",
+    "c-entertain",
+    "c-social"
+  ],
+  "milkTeas": [],
+  "_app": "yunyun-bookkeeping",
+  "_version": 2,
+  "_exportedAt": "2026-10-14T14:27:32.493Z",
+  "_recoveredFrom": "screenshots-2026-10-14"
+}
