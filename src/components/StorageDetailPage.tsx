@@ -6,7 +6,7 @@ import {
 import {
   fingerprintOf, inspectSlots, readMeta, shouldRemindBackup, estimateUsage, formatBytes,
 } from '../utils/storageHealth';
-import { copyToClipboard, downloadFile, stampNow } from '../utils/exportHelper';
+import { copyToClipboard, downloadFile, stampNow, isWeChatBrowser, exportBackup } from '../utils/exportHelper';
 import { countImages } from '../utils/imageDb';
 
 interface Props { onBack: () => void }
@@ -191,7 +191,9 @@ export default function StorageDetailPage({ onBack }: Props) {
             <div className="flex items-start gap-1.5 mt-2.5 px-1">
               <HardDrive size={12} className="text-gray-300 shrink-0 mt-0.5" />
               <p className="text-[10px] text-gray-400 leading-relaxed">
-                导出的文件请发到「文件传输助手」或存网盘。只存在手机里的话，清理浏览器缓存时一起没。
+                {isWeChatBrowser()
+                  ? '你正在微信里打开：微信不允许直接下载文件，请用上面第一个「复制备份到剪贴板」按钮，粘贴到文件传输助手保存。'
+                  : '导出的文件请发到「文件传输助手」或存网盘。只存在手机里的话，清理浏览器缓存时一起没。'}
               </p>
             </div>
           </div>

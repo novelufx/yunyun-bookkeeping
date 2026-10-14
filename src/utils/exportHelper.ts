@@ -62,3 +62,25 @@ export function stampNow(): string {
   const d = new Date();
   return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
 }
+
+/** 是否微信内置浏览器（会屏蔽 Blob 下载） */
+export function isWeChatBrowser(): boolean {
+  const ua = navigator.userAgent.toLowerCase();
+  return ua.includes('micromessenger');
+}
+
+export type ExportOutcome = 'copied' | 'downloaded' | 'failed';
+
+/**
+ * 统一导出入口：微信内优先走剪贴板，其他浏览器走文件下载。
+ * 返回实际走了哪条路，供 UI 给准确提示（不再明明被拦截却说"已下载"）。
+ */
+export async function exportBackup(content: string, filename: string, mime: string): Promise<ExportOutcome> {
+  if (isWeChatBrowser()) {
+    const ok = await copyToClipboard(content);
+    if (ok) return 'copied';
+    // 剪贴板也失败时仍尝试下载（个别微信版本放行）
+  }
+  const ok = downloadFile(content, filename, mime);
+  return ok ? 'downloaded' : 'failed';
+}

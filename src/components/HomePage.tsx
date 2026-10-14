@@ -49,25 +49,29 @@ export default function HomePage({ onAdd, onOpenBudget, onOpenSettings }: Props)
       {/* 备份提醒（静默横幅，不弹窗） */}
       {reminder.needed && state.transactions.length > 0 && (
         <button
-          onClick={() => {
-            const blob = new Blob([exportState(state)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
+          onClick={async () => {
             const d = new Date();
-            a.href = url;
-            a.download = `yunyun-bookkeeping-${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}.json`;
-            document.body.appendChild(a); a.click(); document.body.removeChild(a);
-            setTimeout(() => URL.revokeObjectURL(url), 2000);
+            const stamp = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+            const outcome = await exportBackup(
+              exportState(state),
+              `yunyun-bookkeeping-${stamp}.json`,
+              'application/json'
+            );
             markExported();
             setMetaTick(t => t + 1);
+            if (outcome === 'failed') {
+              alert('导出失败了 😢\n请到「设置 → 账本信息 → 存储详情」里手动复制。');
+            } else if (outcome === 'copied') {
+              alert('备份内容已复制 💕\n\n请粘贴到「文件传输助手」保存。');
+            }
           }}
           className="w-full mb-3 flex items-center gap-2 px-3 py-2.5 rounded-2xl bg-amber-50/85 border border-amber-200/70 active:bg-amber-100 transition-colors text-left"
         >
           <span className="text-sm">💾</span>
           <span className="flex-1 text-[11px] text-amber-700 leading-snug">
-            距上次备份已 {reminder.days} 天，点此导出 · 发到文件传输助手才算安全
+            距上次备份已 {reminder.days} 天，点此复制 · 粘贴到文件传输助手
           </span>
-          <span className="text-[10px] text-amber-500 font-semibold shrink-0">导出 ›</span>
+          <span className="text-[10px] text-amber-500 font-semibold shrink-0">复制 ›</span>
         </button>
       )}
 

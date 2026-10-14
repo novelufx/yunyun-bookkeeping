@@ -5,6 +5,7 @@ import type { Category, Account } from '../types';
 import CategoryIcon from './CategoryIcon';
 import CategoryAddModal from './CategoryAddModal';
 import StorageDetailPage from './StorageDetailPage';
+import { exportBackup } from '../utils/exportHelper';
 import { fingerprintOf, readMeta, shouldRemindBackup, inspectSlots } from '../utils/storageHealth';
 
 interface Props {
@@ -75,13 +76,31 @@ export default function SettingsPage({ onOpenBudget, onOpenImport, onOpenShortcu
     markExported();
   };
 
-  const handleExport = () => {
-    doDownload(exportState(state), 'json', 'application/json');
-    alert('备份已下载 💕\n\n建议立刻发到「文件传输助手」，\n只存在手机里的话清缓存会一起没。');
+  const handleExport = async () => {
+    const json = exportState(state);
+    const d = new Date();
+    const stamp = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+    const outcome = await exportBackup(json, `yunyun-bookkeeping-${stamp}.json`, 'application/json');
+    if (outcome === 'copied') {
+      alert('备份内容已复制 💕\n\n请粘贴到「文件传输助手」保存。\n\n（微信里不让直接下载文件，所以改成复制）');
+    } else if (outcome === 'downloaded') {
+      alert('备份已下载 💕\n\n建议立刻发到「文件传输助手」，\n只存在手机里的话清缓存会一起没。');
+    } else {
+      alert('导出失败了 😢\n\n请到「账本信息 → 存储详情」里手动复制。');
+    }
   };
 
-  const handleExportCsv = () => {
-    doDownload(exportCsv(state), 'csv', 'text/csv;charset=utf-8');
+  const handleExportCsv = async () => {
+    const d = new Date();
+    const stamp = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+    const outcome = await exportBackup(exportCsv(state), `yunyun-bookkeeping-${stamp}.csv`, 'text/csv;charset=utf-8');
+    if (outcome === 'copied') {
+      alert('CSV 内容已复制 💕\n\n粘贴到「文件传输助手」或任意记事本即可保存。');
+    } else if (outcome === 'downloaded') {
+      alert('CSV 已下载 💕');
+    } else {
+      alert('导出失败，请重试');
+    }
   };
 
   const handleImportBackup = (e: ChangeEvent<HTMLInputElement>) => {
@@ -285,10 +304,10 @@ export default function SettingsPage({ onOpenBudget, onOpenImport, onOpenShortcu
             <span className="flex-1 text-sm text-gray-700">导入历史账本</span>
             <span className="text-[10px] text-pink-400">去导入 ›</span>
           </button>
-          <button onClick={handleExport} className="w-full flex items-center gap-3 p-2.5 rounded-xl bg-white/80 border border-pink-200/60 active:bg-pink-50 transition-colors text-left">
+          <button onClick={handleExport} className="w-full flex items-center gap-3 p-2.5 rounded-xl bg-pink-50 border border-pink-300 active:bg-pink-100 transition-colors text-left">
             <span className="w-8 h-8 rounded-lg bg-pink-100 flex items-center justify-center text-base"><Download size={16} className="text-pink-500" /></span>
-            <span className="flex-1 text-sm text-gray-700">导出备份 JSON</span>
-            <span className="text-[10px] text-pink-400">可还原 ›</span>
+            <span className="flex-1 text-sm text-pink-600 font-semibold">导出备份</span>
+            <span className="text-[10px] text-pink-400">复制到剪贴板 ›</span>
           </button>
           <button onClick={handleExportCsv} className="w-full flex items-center gap-3 p-2.5 rounded-xl bg-white/80 border border-pink-200/60 active:bg-pink-50 transition-colors text-left">
             <span className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center text-base">📄</span>
