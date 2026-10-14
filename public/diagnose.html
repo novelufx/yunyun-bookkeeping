@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>账本存储诊断 · 芸芸的记账本</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:linear-gradient(160deg,#FFF5F8 0%,#FFECF3 50%,#FFE4EC 100%);min-height:100vh;padding:16px;padding-bottom:40px;color:#5a4a52}
+.wrap{max-width:520px;margin:0 auto}
+h1{font-size:20px;font-weight:800;color:#4a3a42;margin-bottom:4px}
+.sub{font-size:12px;color:#b89aa6;margin-bottom:16px}
+.card{background:rgba(255,255,255,.85);border:1px solid rgba(255,182,205,.55);border-radius:20px;padding:16px;margin-bottom:12px;box-shadow:0 2px 12px rgba(244,114,182,.09)}
+.card h2{font-size:13px;font-weight:800;color:#5a4a52;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.ok{background:#4ade80}.bad{background:#fb7185}.warn{background:#fbbf24}.none{background:#cbd5e1}
+.kv{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(244,182,205,.28);font-size:12.5px;gap:10px}
+.kv:last-child{border-bottom:none}
+.kv .k{color:#8a7580;flex-shrink:0}
+.kv .v{color:#4a3a42;font-weight:700;text-align:right;word-break:break-all;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px}
+.big{font-size:34px;font-weight:800;text-align:center;padding:8px 0 4px;line-height:1.1}
+.big.good{color:#10b981}.big.bad{color:#f43f5e}.big.zero{color:#cbd5e1}
+.lbl{font-size:12px;color:#b89aa6;text-align:center;margin-bottom:4px}
+.hint{font-size:11.5px;color:#a98d9a;line-height:1.75;margin-top:10px}
+.hint b{color:#f43f5e}
+.mono{font-size:10.5px;color:#9b8390;word-break:break-all;font-family:ui-monospace,Menlo,Consolas,monospace;line-height:1.6}
+.btn{display:block;width:100%;padding:14px;border:none;border-radius:16px;font-size:14px;font-weight:800;font-family:inherit;cursor:pointer;margin-top:8px}
+.btn-p{background:#f472b6;color:#fff}
+.btn-o{background:#fff;color:#f472b6;border:1.5px solid #fbcfe8}
+.badge{display:inline-block;font-size:10px;padding:2px 8px;border-radius:999px;font-weight:700}
+.b-ok{background:#dcfce7;color:#16a34a}.b-bad{background:#ffe4e6;color:#e11d48}.b-warn{background:#fef3c7;color:#d97706}.b-none{background:#f1f5f9;color:#94a3b8}
+.tbl{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px}
+.tbl th{text-align:left;padding:5px 4px;color:#a98d9a;font-weight:700;border-bottom:1px solid rgba(244,182,205,.4);font-size:10.5px}
+.tbl td{padding:5px 4px;border-bottom:1px solid rgba(244,182,205,.2);color:#5a4a52}
+.loading{text-align:center;padding:40px 0;color:#b89aa6;font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🔍 账本存储诊断</h1>
+  <p class="sub">读取本机浏览器里「芸芸的记账本」的真实存储状态</p>
+  <div id="app"><div class="loading">正在读取本机数据...</div></div>
+</div>
+
+<script>
+const KEYS = ['yunyun-bookkeeping-v1','yunyun-bookkeeping-v1-backup','yunyun-bookkeeping-v1-backup2','yunyun-bookkeeping-v1-backup3'];
+const K_PREFIX = 'yunyun';
+
+function fmt(n){ return (Math.abs(n)/100).toFixed(2); }
+
+function findKeys(){
+  const all = [];
+  try{
+    for(let i=0;i<localStorage.length;i++){
+      const k = localStorage.key(i);
+      if(k) all.push(k);
+    }
+  }catch(e){}
+  return all;
+}
+
+function readState(key){
+  try{
+    const raw = localStorage.getItem(key);
+    if(!raw) return null;
+    return JSON.parse(raw);
+  }catch(e){ return {__error:String(e)}; }
+}
+
+function analyze(st){
+  if(!st) return null;
+  if(st.__error) return {bad:true};
+  const txs = Array.isArray(st.transactions) ? st.transactions : [];
+  const cats = Array.isArray(st.categories) ? st.categories : [];
+  const accs = Array.isArray(st.accounts) ? st.accounts : [];
+  const teas = Array.isArray(st.milkTeas) ? st.milkTeas : [];
+
+  let inc=0, exp=0, transfer=0, latest='';
+  txs.forEach(t=>{
+    const a = Number(t.amount)||0;
+    if(t.type==='income') inc+=a;
+    else if(t.type==='expense') exp+=a;
+    else transfer++;
+    if(t.date && t.date>latest) latest=t.date;
+  });
+  return {txs:txs.length, cats:cats.length, accs:accs.length, teas:teas.length, inc, exp, transfer, latest, raw:st};
+}
+
+async function idbInfo(){
+  if(!window.indexedDB) return {supported:false, stores:[]};
+  return new Promise(resolve=>{
+    try{
+      const req = indexedDB.databases ? indexedDB.databases() : Promise.resolve([]);
+      req.then(list=>{
+        const stores = [];
+        let pending = list.length;
+        if(pending===0) return resolve({supported:true, stores});
+        list.forEach(db=>{
+          let cnt = 0;
+          try{
+            const r = indexedDB.open(db.name);
+            r.onsuccess = ()=>{
+              try{
+                const d = r.result;
+                const names = Array.from(d.objectStoreNames);
+                if(names.length===0){ stores.push({name:db.name, version:db.version, count:0}); }
+                else{
+                  let left = names.length;
+                  names.forEach(sn=>{
+                    try{
+                      const tx = d.transaction(sn,'readonly');
+                      const cr = tx.objectStore(sn).count();
+                      cr.onsuccess = ()=>{
+                        cnt += cr.result;
+                        if(--left===0){ stores.push({name:db.name+' / '+sn, version:db.version, count:cnt}); }
+                      };
+                      cr.onerror = ()=>{ if(--left===0) stores.push({name:db.name, version:db.version, count:cnt}); };
+                    }catch(e){ if(--left===0) stores.push({name:db.name, version:db.version, count:cnt}); }
+                  });
+                }
+              }catch(e){ stores.push({name:db.name, version:db.version, count:-1}); }
+            };
+            r.onerror = ()=>{ stores.push({name:db.name, version:db.version, count:-1}); };
+          }catch(e){ stores.push({name:db.name, version:db.version, count:-1}); }
+        });
+      }).catch(()=>resolve({supported:true, stores}));
+    }catch(e){ resolve({supported:true, stores:[]}); }
+  });
+}
+
+function esc(s){ return String(s).replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c])); }
+
+function render(){
+  const app = document.getElementById('app');
+  const allKeys = findKeys();
+  const mine = allKeys.filter(k=>k.startsWith(K_PREFIX));
+  const others = allKeys.filter(k=>!k.startsWith(K_PREFIX));
+
+  // 主 key 分析
+  const primary = readState(KEYS[0]);
+  const pa = analyze(primary);
+
+  let html = '';
+
+  // === 总判 ===
+  const hasData = !!(pa && !pa.bad && pa.txs > 0);
+  html += '<div class="card" style="text-align:center">';
+  html += '<p class="lbl">当前地址下的账本笔数</p>';
+  html += '<div class="big '+(hasData?'good':(pa&&pa.bad?'bad':'zero'))+'">'+(pa&&!pa.bad?pa.txs:'读取失败')+'</div>';
+  if(pa && !pa.bad && !hasData){
+    html += '<p class="hint" style="text-align:center;margin-top:6px">这个地址下<b>没有任何账目记录</b>。如果你之前明明在这里记过账，说明<b>换地址了</b>——请回到微信，用下面「排查步骤」找旧地址。</p>';
+  }
+  if(hasData){
+    html += '<p class="hint" style="text-align:center;margin-top:6px">数据还在！可以直接在本页点下方按钮导出备份。</p>';
+  }
+  html += '</div>';
+
+  // === 主账本详情 ===
+  if(pa && !pa.bad){
+    html += '<div class="card"><h2><span class="dot ok"></span>账本详情</h2>';
+    html += '<div class="kv"><span class="k">账目总数</span><span class="v">'+pa.txs+' 笔</span></div>';
+    html += '<div class="kv"><span class="k">收入合计</span><span class="v" style="color:#10b981">¥'+fmt(pa.inc)+'</span></div>';
+    html += '<div class="kv"><span class="k">支出合计</span><span class="v" style="color:#f43f5e">¥'+fmt(pa.exp)+'</span></div>';
+    html += '<div class="kv"><span class="k">转账笔数</span><span class="v">'+pa.transfer+' 笔</span></div>';
+    html += '<div class="kv"><span class="k">分类数量</span><span class="v">'+pa.cats+' 个</span></div>';
+    html += '<div class="kv"><span class="k">账户数量</span><span class="v">'+pa.accs+' 个</span></div>';
+    html += '<div class="kv"><span class="k">奶茶记录</span><span class="v">'+pa.teas+' 杯</span></div>';
+    html += '<div class="kv"><span class="k">最后一笔日期</span><span class="v">'+(pa.latest||'—')+'</span></div>';
+    html += '<div class="kv"><span class="k">存储体积</span><span class="v">'+(localStorage.getItem(KEYS[0])||'').length.toLocaleString()+' 字节</span></div>';
+    html += '</div>';
+  }
+
+  // === 备份副本 ===
+  const backups = [];
+  KEYS.slice(1).forEach(k=>{
+    const st = readState(k);
+    if(st){ const a = analyze(st); if(a && !a.bad && a.txs>0) backups.push({key:k, info:a}); }
+  });
+  // 也扫其他可能的备份 key
+  mine.forEach(k=>{
+    if(KEYS.indexOf(k)===-1){
+      const st = readState(k);
+      if(st){ const a = analyze(st); if(a && !a.bad && a.txs>0) backups.push({key:k, info:a}); }
+    }
+  });
+
+  html += '<div class="card"><h2><span class="dot '+(backups.length?'ok':'none')+'"></span>备份副本（保险）</h2>';
+  if(backups.length){
+    html += '<p class="hint" style="margin:0 0 8px">发现 '+backups.length+' 份可用备份，主数据丢失时会自动恢复：</p>';
+    backups.forEach(b=>{
+      html += '<div class="kv"><span class="k mono">'+esc(b.key)+'</span><span class="v">'+b.info.txs+' 笔 · '+b.info.latest+'</span></div>';
+    });
+  } else {
+    html += '<p class="hint" style="margin:0">当前没有发现备份副本。<br>说明这是<b>旧版本</b>记账本（还没加备份保险），或者数据已被清空。</p>';
+  }
+  html += '</div>';
+
+  // === 图片库 ===
+  idbInfo().then(info=>{
+    const box = document.getElementById('idb-box');
+    if(!box) return;
+    let h = '<div class="card"><h2><span class="dot '+(info.stores.length?'ok':'none')+'"></span>图片库（奶茶照片 / 自定义图标）</h2>';
+    if(!info.supported){ h += '<p class="hint" style="margin:0">此浏览器不支持 IndexedDB</p>'; }
+    else if(info.stores.length===0){ h += '<p class="hint" style="margin:0">没有找到图片库（可能从未上传过图片，或已被清除）</p>'; }
+    else{
+      h += '<table class="tbl"><tr><th>库 / 表</th><th>版本</th><th>条数</th></tr>';
+      info.stores.forEach(s=>{ h += '<tr><td class="mono">'+esc(s.name)+'</td><td>'+s.version+'</td><td>'+s.count+'</td></tr>'; });
+      h += '</table>';
+    }
+    h += '</div>';
+    box.innerHTML = h;
+  });
+
+  // === 原始 key 列表 ===
+  html += '<div class="card"><h2><span class="dot '+(mine.length?'warn':'none')+'"></span>本机全部存储键（'+allKeys.length+' 个）</h2>';
+  if(allKeys.length===0){
+    html += '<p class="hint" style="margin:0">localStorage 是<b>完全空的</b>。这通常意味着：换了新地址，或者存储被系统/微信清除了。</p>';
+  } else {
+    html += '<table class="tbl"><tr><th>键名</th><th>字节</th><th>归属</th></tr>';
+    allKeys.forEach(k=>{
+      let sz=0; try{ sz=(localStorage.getItem(k)||'').length; }catch(e){}
+      const own = k.startsWith(K_PREFIX) ? '<span class="badge b-ok">账本</span>' : '<span class="badge b-none">其他</span>';
+      html += '<tr><td class="mono">'+esc(k)+'</td><td>'+sz+'</td><td>'+own+'</td></tr>';
+    });
+    html += '</table>';
+  }
+  if(others.length){
+    html += '<p class="hint">另有 '+others.length+' 个非账本键（多为其他网站残留，与本账本无关）。</p>';
+  }
+  html += '</div>';
+
+  // === 当前地址 ===
+  html += '<div class="card"><h2><span class="dot warn"></span>当前访问地址</h2>';
+  html += '<div class="kv"><span class="k">协议</span><span class="v">'+location.protocol+'</span></div>';
+  html += '<div class="kv"><span class="k">主机</span><span class="v">'+location.host+'</span></div>';
+  html += '<div class="kv"><span class="k">完整来源</span><span class="v">'+esc(location.origin)+'</span></div>';
+  html += '<div class="kv"><span class="k">用户代理</span><span class="v" style="font-size:10px">'+esc(navigator.userAgent.slice(0,120))+'</span></div>';
+  html += '<p class="hint"><b>关键：</b>浏览器按「协议+域名+端口」隔离存储。上面这个来源和你之前用的只要有一处不同（http/https、末尾斜杠、子域名），就是两个完全独立的账本。</p>';
+  html += '</div>';
+
+  // === 排查步骤 ===
+  html += '<div class="card"><h2><span class="dot bad"></span>排查步骤（按顺序试）</h2>';
+  html += '<p class="hint" style="margin:0 0 10px"><b>① 确认地址完全一致</b><br>让微信重新打开这个链接，注意不要在末尾加斜杠：<br><span class="mono" style="color:#f472b6;display:block;margin:4px 0">https://90c8ef87591744a6826d588cb3051e3d.bj8.agentos-app.net</span>如果本页显示 0 笔，再试带斜杠的版本：<br><span class="mono" style="color:#f472b6;display:block;margin:4px 0">https://90c8ef87591744a6826d588cb3051e3d.bj8.agentos-app.net/</span></p>';
+  html += '<p class="hint" style="margin:0 0 10px"><b>② 翻出历史链接</b><br>在微信聊天记录里搜「记账」或「记账本」，找到你之前发给自己或存进收藏的那条链接，点开看本页数字。</p>';
+  html += '<p class="hint" style="margin:0 0 10px"><b>③ 找手机桌面图标</b><br>如果之前「添加到过桌面」，从桌面图标打开会走另一套存储。</p>';
+  html += '<p class="hint" style="margin:0 0 10px"><b>④ 换浏览器试一次</b><br>用手机自带浏览器或 Chrome 打开同一个链接。如果浏览器里有数据、微信里没有 → 是微信清掉了（换浏览器能找回）；如果两边都是 0 → 微信已彻底清空，无法恢复。</p>';
+  html += '<p class="hint" style="margin:0"><b>⑤ 都试完还是空</b><br>说明数据已被清除，无法找回，只能重新记。但请立刻做存储加固，避免再次发生。</p>';
+  html += '</div>';
+
+  // === 导出 ===
+  html += '<div class="card"><h2><span class="dot ok"></span>导出当前数据</h2>';
+  if(pa && !pa.bad && pa.txs>0){
+    html += '<button class="btn btn-p" onclick="downloadBackup()">下载账本备份 JSON</button>';
+    html += '<p class="hint" style="text-align:center;margin-top:8px">下载后请立刻存到<b>微信文件传输助手</b>或网盘，不要只留在手机里。</p>';
+  } else {
+    html += '<p class="hint" style="margin:0">当前没有数据可导出。上面「排查步骤」成功后，本页会自动出现下载按钮。</p>';
+  }
+  html += '</div>';
+
+  html += '<div class="card" style="background:rgba(255,247,250,.7)">';
+  html += '<p class="hint" style="margin:0;text-align:center">本页只读取不修改你的数据<br>你可以放心诊断</p>';
+  html += '</div>';
+
+  document.getElementById('idb-box').innerHTML = '';
+  app.innerHTML = html;
+}
+
+function downloadBackup(){
+  const raw = localStorage.getItem(KEYS[0]);
+  if(!raw) return alert('没有数据可导出');
+  const blob = new Blob([raw],{type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const d = new Date();
+  a.href = url;
+  a.download = 'yunyun-bookkeeping-rescue-'+d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0')+'.json';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url),2000);
+}
+
+render();
+</script>
+</body>
+</html>

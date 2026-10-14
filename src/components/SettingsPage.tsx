@@ -1,9 +1,11 @@
-import { useState, useRef, type ChangeEvent } from 'react';
-import { Plus, Trash2, Edit3, RotateCcw, AlertTriangle, Download, Upload, PiggyBank, Grid3x3 } from 'lucide-react';
-import { useStore, formatMoney, genId, exportState, mergeWithPresets, presetCategories, presetAccounts } from '../store.tsx';
+import { useState, useRef, useMemo, type ChangeEvent } from 'react';
+import { Plus, Trash2, Edit3, RotateCcw, AlertTriangle, Download, Upload, PiggyBank, Grid3x3, HardDrive } from 'lucide-react';
+import { useStore, formatMoney, genId, exportState, exportCsv, markExported, mergeWithPresets, presetCategories, presetAccounts } from '../store.tsx';
 import type { Category, Account } from '../types';
 import CategoryIcon from './CategoryIcon';
 import CategoryAddModal from './CategoryAddModal';
+import StorageDetailPage from './StorageDetailPage';
+import { fingerprintOf, readMeta, shouldRemindBackup, inspectSlots } from '../utils/storageHealth';
 
 interface Props {
   onOpenBudget: () => void;
@@ -12,11 +14,17 @@ interface Props {
 }
 
 export default function SettingsPage({ onOpenBudget, onOpenImport, onOpenShortcuts }: Props) {
-  const { state, dispatch } = useStore();
+  const { state, dispatch, health } = useStore();
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showCatModal, setShowCatModal] = useState(false);
   const [editingCat, setEditingCat] = useState<Category | undefined>();
+  const [showStorage, setShowStorage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const fp = useMemo(() => fingerprintOf(state), [state]);
+  const meta = useMemo(() => readMeta(), [state]);
+  const reminder = shouldRemindBackup(meta);
+  const healthyCount = useMemo(() => inspectSlots().filter(s => s.exists && s.healthy).length, [state]);
 
   const isPresetCategory = (id: string) => presetCategories.some(c => c.id === id);
   const isPresetAccount = (id: string) => presetAccounts.some(a => a.id === id);
@@ -52,19 +60,28 @@ export default function SettingsPage({ onOpenBudget, onOpenImport, onOpenShortcu
     });
   };
 
-  const handleExport = () => {
-    const data = exportState(state);
-    const blob = new Blob([data], { type: 'application/json' });
+  const doDownload = (content: string, ext: string, mime: string) => {
+    const blob = new Blob([content], { type: mime });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     const d = new Date();
-    const localDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    a.download = `yunyun-bookkeeping-${localDate}.json`;
+    const localDate = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+    a.download = `yunyun-bookkeeping-${localDate}.${ext}`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+    markExported();
+  };
+
+  const handleExport = () => {
+    doDownload(exportState(state), 'json', 'application/json');
+    alert('备份已下载 💕\n\n建议立刻发到「文件传输助手」，\n只存在手机里的话清缓存会一起没。');
+  };
+
+  const handleExportCsv = () => {
+    doDownload(exportCsv(state), 'csv', 'text/csv;charset=utf-8');
   };
 
   const handleImportBackup = (e: ChangeEvent<HTMLInputElement>) => {
@@ -95,6 +112,64 @@ export default function SettingsPage({ onOpenBudget, onOpenImport, onOpenShortcu
   return (
     <div className="h-full overflow-y-auto scrollbar-hide animate-fade-in px-4 pt-4 pb-4">
       <h1 className="text-lg font-bold text-gray-800 mb-4">设置 ⚙️</h1>
+
+      {/* 账本信息卡 */}
+      <button
+        onClick={() => setShowStorage(true)}
+        className="glass-strong p-4 mb-3 w-full text-left active:bg-pink-50/60 transition-colors"
+      >
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-xs font-bold text-gray-700">账本信息</p>
+          <span className="text-[10px] text-pink-400">存储详情 ›</span>
+        </div>
+        <div className="flex items-end justify-between">
+          <div>
+            <p className="text-2xl font-bold text-pink-500 leading-none">{fp.txCount}</p>
+            <p className="text-[10px] text-gray-400 mt-1">笔账目 · {fp.teaCount} 杯奶茶</p>
+          </div>
+          <div className="text-right space-y-0.5">
+            <p className="text-[10px] text-gray-400">
+              记录区间 {fp.firstDate ? fp.firstDate.slice(5) + ' ~ ' + fp.lastDate.slice(5) : '—'}
+            </p>
+            <p className="text-[10px] text-gray-400">
+              存储健康 <span className={healthyCount >= 2 ? 'text-green-500 font-semibold' : 'text-amber-500 font-semibold'}>{healthyCount}/4 份正常</span>
+            </p>
+            <p className={`text-[10px] ${reminder.needed ? 'text-amber-500 font-semibold' : 'text-gray-400'}`}>
+              {meta.lastExportAt
+                ? (reminder.needed ? `距上次导出 ${reminder.days} 天` : '已备份')
+                : '还没导出过备份'}
+            </p>
+          </div>
+        </div>
+        {health.writeError && (
+          <p className="text-[10px] text-rose-500 mt-2 flex items-start gap-1">
+            <AlertTriangle size={11} className="shrink-0 mt-0.5" />
+            {health.writeError}
+          </p>
+        )}
+        <p className="text-[10px] text-gray-400 leading-relaxed mt-2 pt-2 border-t border-pink-100">
+          ⚠️ 换浏览器 / 微信分身 = 另一个独立账本，数据互不相通
+        </p>
+      </button>
+
+      {/* 恢复提示 */}
+      {health.recoveredFrom && (
+        <div className="glass p-3 mb-3 border-amber-200 bg-amber-50/60">
+          <p className="text-xs font-bold text-amber-700 mb-1">🔧 已自动从备份恢复</p>
+          <p className="text-[10px] text-amber-600 leading-relaxed">
+            主存储不可用，已从「{health.recoveredFrom.includes('bk') ? '备份 ' + health.recoveredFrom.slice(-1) : '主存储'}」恢复 {fp.txCount} 笔账目。
+            请尽快导出一份备份。
+          </p>
+        </div>
+      )}
+      {health.isFresh && fp.txCount === 0 && (
+        <div className="glass p-3 mb-3">
+          <p className="text-xs font-bold text-gray-700 mb-1">当前环境没有数据</p>
+          <p className="text-[10px] text-gray-400 leading-relaxed">
+            这个浏览器/微信里没有任何账本记录。若你以前记过账，说明换了容器或换了链接，请回到旧位置核对。
+          </p>
+        </div>
+      )}
 
       {/* Categories */}
       <div className="glass p-4 mb-3">
@@ -189,8 +264,13 @@ export default function SettingsPage({ onOpenBudget, onOpenImport, onOpenShortcu
           </button>
           <button onClick={handleExport} className="w-full flex items-center gap-3 p-2.5 rounded-xl bg-white/80 border border-pink-200/60 active:bg-pink-50 transition-colors text-left">
             <span className="w-8 h-8 rounded-lg bg-pink-100 flex items-center justify-center text-base"><Download size={16} className="text-pink-500" /></span>
-            <span className="flex-1 text-sm text-gray-700">导出备份</span>
-            <span className="text-[10px] text-pink-400">下载 JSON ›</span>
+            <span className="flex-1 text-sm text-gray-700">导出备份 JSON</span>
+            <span className="text-[10px] text-pink-400">可还原 ›</span>
+          </button>
+          <button onClick={handleExportCsv} className="w-full flex items-center gap-3 p-2.5 rounded-xl bg-white/80 border border-pink-200/60 active:bg-pink-50 transition-colors text-left">
+            <span className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center text-base">📄</span>
+            <span className="flex-1 text-sm text-gray-700">导出 CSV 表格</span>
+            <span className="text-[10px] text-pink-400">Excel 可看 ›</span>
           </button>
           <button onClick={() => fileInputRef.current?.click()} className="w-full flex items-center gap-3 p-2.5 rounded-xl bg-white/80 border border-pink-200/60 active:bg-pink-50 transition-colors text-left">
             <span className="w-8 h-8 rounded-lg bg-pink-100 flex items-center justify-center text-base"><Upload size={16} className="text-pink-500" /></span>
@@ -264,6 +344,9 @@ export default function SettingsPage({ onOpenBudget, onOpenImport, onOpenShortcu
           onClose={() => { setShowCatModal(false); setEditingCat(undefined); }}
         />
       )}
+
+      {/* Storage detail overlay */}
+      {showStorage && <StorageDetailPage onBack={() => setShowStorage(false)} />}
     </div>
   );
 }

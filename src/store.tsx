@@ -1,7 +1,10 @@
-import { createContext, useContext, useReducer, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useReducer, useEffect, useState, type ReactNode } from 'react';
 import type { Transaction, Category, Account, TxType, Budget, MilkTeaEntry } from './types';
+import {
+  STORAGE_KEY, BACKUP_KEYS, ALL_KEYS, collectCandidates, writeMeta,
+} from './utils/storageHealth';
 
-const STORAGE_KEY = 'yunyun-bookkeeping-v1';
+export { STORAGE_KEY, BACKUP_KEYS };
 
 export const presetCategories: Category[] = [
   { id: 'c-food', name: '餐饮', type: 'expense', icon: '🍱', sort: 0 },
@@ -119,67 +122,167 @@ function getInitialState(): State {
   };
 }
 
-function loadState(): State {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      return mergeWithPresets(JSON.parse(raw) as Partial<State>);
-    }
-  } catch {
-    // ignore
-  }
-  return getInitialState();
+// ---------- 单条数据合法性校验（坏条目单独丢弃，绝不整体回退空账本） ----------
+function isValidTx(t: any): t is Transaction {
+  return !!t && typeof t === 'object'
+    && typeof t.id === 'string' && t.id.length > 0
+    && (t.type === 'expense' || t.type === 'income' || t.type === 'transfer')
+    && Number.isFinite(Number(t.amount))
+    && typeof t.date === 'string';
+}
+function isValidTea(m: any): m is MilkTeaEntry {
+  return !!m && typeof m === 'object'
+    && typeof m.id === 'string' && m.id.length > 0
+    && typeof m.date === 'string' && typeof m.brand === 'string';
+}
+function isPlainObject(v: any): v is Record<string, any> {
+  return !!v && typeof v === 'object' && !Array.isArray(v);
 }
 
 // 与预设分类/账户合并，确保即使旧备份缺少某项也不会缺字段
-export function mergeWithPresets(parsed: Partial<State>): State {
-  const catIds = new Set((parsed.categories || []).map(c => c.id));
-  const mergedCats = [...(parsed.categories || []), ...presetCategories.filter(c => !catIds.has(c.id))];
-  const accIds = new Set((parsed.accounts || []).map(a => a.id));
-  const mergedAccs = [...(parsed.accounts || []), ...presetAccounts.filter(a => !accIds.has(a.id))];
-  // 快捷分类：从旧数据迁移时，补全不存在的 id，确保恰好 8 个
-  let shortcuts = parsed.shortcutCategories || [];
+export function mergeWithPresets(parsed: any): State {
+  const rawCats = Array.isArray(parsed?.categories) ? parsed.categories.filter((c: any) => isPlainObject(c) && typeof c.id === 'string') : [];
+  const catIds = new Set(rawCats.map((c: any) => c.id));
+  const mergedCats = [...rawCats, ...presetCategories.filter(c => !catIds.has(c.id))];
+
+  const rawAccs = Array.isArray(parsed?.accounts) ? parsed.accounts.filter((a: any) => isPlainObject(a) && typeof a.id === 'string') : [];
+  const accIds = new Set(rawAccs.map((a: any) => a.id));
+  const mergedAccs = [...rawAccs, ...presetAccounts.filter(a => !accIds.has(a.id))];
+
+  // 快捷分类：非数组一律当空处理，绝不 .filter 抛错导致整份数据丢失
   const validIds = new Set(mergedCats.map(c => c.id));
-  shortcuts = shortcuts.filter(id => validIds.has(id));
+  let shortcuts: string[] = Array.isArray(parsed?.shortcutCategories)
+    ? parsed.shortcutCategories.filter((id: any) => typeof id === 'string' && validIds.has(id))
+    : [];
   if (shortcuts.length < 8) {
     const fallback = mergedCats.filter(c => c.type === 'expense' && !shortcuts.includes(c.id)).slice(0, 8 - shortcuts.length);
     shortcuts = [...shortcuts, ...fallback.map(c => c.id)];
   }
   shortcuts = shortcuts.slice(0, 8);
+
+  const budgetRaw = isPlainObject(parsed?.budget) ? parsed.budget : {};
+  const budgetCats = isPlainObject(budgetRaw.categories) ? budgetRaw.categories : {};
+  const safeBudgetCats: Record<string, number> = {};
+  for (const [k, v] of Object.entries(budgetCats)) {
+    const n = Number(v);
+    if (typeof k === 'string' && Number.isFinite(n)) safeBudgetCats[k] = n;
+  }
+
   return {
-    transactions: parsed.transactions || [],
+    transactions: Array.isArray(parsed?.transactions) ? parsed.transactions.filter(isValidTx) : [],
     categories: mergedCats,
     accounts: mergedAccs,
-    budget: parsed.budget || { monthlyTotal: undefined, categories: {} },
+    budget: { monthlyTotal: Number.isFinite(Number(budgetRaw.monthlyTotal)) ? Number(budgetRaw.monthlyTotal) : undefined, categories: safeBudgetCats },
     shortcutCategories: shortcuts,
-    milkTeas: parsed.milkTeas || [],
+    milkTeas: Array.isArray(parsed?.milkTeas) ? parsed.milkTeas.filter(isValidTea) : [],
   };
 }
 
-function saveState(state: State) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  } catch {
-    // ignore
-  }
+export interface LoadResult {
+  state: State;
+  /** 非 null 表示主存储不可用/为空，已自动从该备份副本恢复 */
+  recoveredFrom: string | null;
+  /** 所有副本都没有数据 */
+  isFresh: boolean;
 }
 
-const StoreContext = createContext<{ state: State; dispatch: React.Dispatch<Action> } | null>(null);
+export function loadState(): LoadResult {
+  let candidates: ReturnType<typeof collectCandidates> = [];
+  try {
+    candidates = collectCandidates();
+  } catch {
+    // 存储不可访问（隐私模式/被禁用）时静默降级
+  }
+  if (candidates.length === 0) {
+    // 可能主存储存在但损坏/为空 —— 直接回初始态，不做任何写入
+    return { state: getInitialState(), recoveredFrom: null, isFresh: true };
+  }
+  const best = candidates[0];
+  const mainBroken = !candidates.some(c => c.key === STORAGE_KEY);
+  return {
+    state: mergeWithPresets(best.data),
+    recoveredFrom: mainBroken ? best.key : null,
+    isFresh: false,
+  };
+}
+
+let storageErrorMsg: string | null = null;
+export function getStorageError() { return storageErrorMsg; }
+
+/** 轮转备份：bk3←bk2, bk2←bk1, bk1←本次 */
+function rotateBackup(json: string) {
+  for (let i = BACKUP_KEYS.length - 1; i > 0; i--) {
+    let prev: string | null = null;
+    try { prev = localStorage.getItem(BACKUP_KEYS[i - 1]); } catch { /* ignore */ }
+    if (prev) { try { localStorage.setItem(BACKUP_KEYS[i], prev); } catch { /* ignore */ } }
+  }
+  try { localStorage.setItem(BACKUP_KEYS[0], json); } catch { /* ignore */ }
+}
+
+/**
+ * 写入主存储 + 轮转备份。
+ * 返回 null 表示成功，否则返回错误信息（供 UI 告警，不再静默失败）。
+ */
+export function saveState(state: State): string | null {
+  let json: string;
+  try {
+    json = JSON.stringify(state);
+  } catch (e) {
+    storageErrorMsg = '数据序列化失败：' + (e instanceof Error ? e.message : e);
+    return storageErrorMsg;
+  }
+  try {
+    localStorage.setItem(STORAGE_KEY, json);
+    if (localStorage.getItem(STORAGE_KEY) !== json) {
+      throw new Error('写入校验不一致');
+    }
+    storageErrorMsg = null;
+  } catch (e) {
+    storageErrorMsg = '数据保存失败（浏览器拒绝写入或空间已满）：'
+      + (e instanceof Error ? e.message : e);
+    return storageErrorMsg;
+  }
+  rotateBackup(json);
+  return null;
+}
+
+export interface StoreHealth {
+  /** 本次启动是否从备份自动恢复 */
+  recoveredFrom: string | null;
+  /** 全部副本都没数据（首次使用或容器被清空） */
+  isFresh: boolean;
+  /** 最近一次写入失败信息 */
+  writeError: string | null;
+}
+
+const StoreContext = createContext<{
+  state: State;
+  dispatch: React.Dispatch<Action>;
+  health: StoreHealth;
+} | null>(null);
 
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, getInitialState());
+  // ★ 关键：数据读取完成前，禁止任何写入。
+  //   否则挂载时会用初始空账本覆盖 localStorage，窗口期内 WebView 被销毁即永久丢数据。
+  const [hydrated, setHydrated] = useState(false);
+  const [health, setHealth] = useState<StoreHealth>({ recoveredFrom: null, isFresh: false, writeError: null });
 
   useEffect(() => {
-    const saved = loadState();
+    const { state: saved, recoveredFrom, isFresh } = loadState();
     dispatch({ type: 'LOAD', payload: saved });
+    setHydrated(true);
+    setHealth({ recoveredFrom, isFresh, writeError: getStorageError() });
   }, []);
 
   useEffect(() => {
-    saveState(state);
-  }, [state]);
+    if (!hydrated) return; // ★ 本次事故的根因修复
+    const err = saveState(state);
+    setHealth(h => (h.writeError === err ? h : { ...h, writeError: err }));
+  }, [state, hydrated]);
 
   return (
-    <StoreContext.Provider value={{ state, dispatch }}>
+    <StoreContext.Provider value={{ state, dispatch, health }}>
       {children}
     </StoreContext.Provider>
   );
@@ -312,6 +415,49 @@ export function exportState(state: State): string {
     shortcutCategories: state.shortcutCategories,
     milkTeas: state.milkTeas,
     _app: 'yunyun-bookkeeping',
+    _version: 2,
     _exportedAt: new Date().toISOString(),
   }, null, 2);
+}
+
+function csvCell(v: any): string {
+  const s = String(v ?? '');
+  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+/** 导出 CSV（UTF-8 BOM，微信/Excel 直接打开不乱码） */
+export function exportCsv(state: State): string {
+  const catName = (id: string) => state.categories.find(c => c.id === id)?.name || '其他';
+  const accName = (id: string) => state.accounts.find(a => a.id === id)?.name || '';
+  const typeName = (t: TxType) => (t === 'expense' ? '支出' : t === 'income' ? '收入' : '转账');
+
+  const lines: string[] = [];
+  lines.push(['日期', '类型', '分类', '金额(元)', '账户', '转入账户', '备注'].map(csvCell).join(','));
+
+  const sorted = [...state.transactions].sort((a, b) => a.date.localeCompare(b.date));
+  for (const t of sorted) {
+    lines.push([
+      t.date,
+      typeName(t.type),
+      t.type === 'transfer' ? '转账' : catName(t.categoryId),
+      (t.amount / 100).toFixed(2),
+      accName(t.accountId),
+      t.type === 'transfer' ? accName(t.toAccountId || '') : '',
+      t.note || '',
+    ].map(csvCell).join(','));
+  }
+  if (state.milkTeas.length > 0) {
+    lines.push('');
+    lines.push(['—— 奶茶记录 ——'].join(','));
+    lines.push(['日期', '品牌', '价格(元)', '糖度', '冰度', '备注'].map(csvCell).join(','));
+    for (const m of [...state.milkTeas].sort((a, b) => a.date.localeCompare(b.date))) {
+      lines.push([m.date, m.brand, (m.price / 100).toFixed(2), m.sugar || '', m.ice || '', m.note || ''].map(csvCell).join(','));
+    }
+  }
+  return '\uFEFF' + lines.join('\r\n');
+}
+
+/** 记录一次导出，用于备份提醒 */
+export function markExported() {
+  try { writeMeta({ lastExportAt: Date.now() }); } catch { /* ignore */ }
 }

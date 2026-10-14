@@ -121,6 +121,18 @@ export async function deleteImage(key: string): Promise<void> {
   });
 }
 
+/** 统计图片总数 */
+export async function countImages(): Promise<number> {
+  const db = await openDb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readonly');
+    const req = tx.objectStore(STORE_NAME).count();
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+    tx.oncomplete = () => db.close();
+  });
+}
+
 /**
  * 从文件上传图片：压缩 → 存 IndexedDB → 返回 key
  */
